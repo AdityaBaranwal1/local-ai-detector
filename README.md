@@ -43,12 +43,13 @@ for texts ≤ 225 words, or `score` for its 150-word window; tells carry `rule`,
 `checked_at`, `seconds`, `device`, `complete`, `stored`, `from_store`.
 
 The checks (also the map card's `steps`): **split** (sentences, abbreviations kept whole) → **model** (P(ai) as
-below) → **drivers** (which sentences make it read as AI) → **tells** (`detector/tells.py`, `TELLS_VERSION` 2):
-- *strong* = FAIL on its own: stock LLM openers/closers ("I hope this email finds you well", "Thank you for considering
-  my application"), two or more different overused LLM words (delve, tapestry, pivotal, seamless…), leftover
+below) → **drivers** (which sentences make it read as AI) → **tells** (`detector/tells.py`, `TELLS_VERSION` 3):
+- *strong* = FAIL on its own: two or more different overused LLM words (delve, tapestry, pivotal, seamless…), leftover
   placeholders (`[Hiring Manager Name]`, `{{first_name}}`), markdown in plain text.
-- *soft* = listed only: one such word, em dashes (2+), "not just X, but Y", "the hardest part was not X", a rule-of-three
-  habit, "In conclusion," wrap-ups, eager-applicant boilerplate.
+- *soft* = listed only: stock openers/closers ("I hope this email finds you well", "I look forward to hearing from
+  you": ordinary in human email — Sol round 1 caught them blocking 4 human texts, so `TELLS_VERSION` 3 made them soft),
+  one LLM word, em dashes (2+), "not just X, but Y", "the hardest part was not X", a rule-of-three habit,
+  "In conclusion," wrap-ups, eager-applicant boilerplate.
 - Measured: a strong tell in 13 of 74 AI texts and 2 of 554 human texts (plus 3 reddit posts with markdown).
 
 **Verdicts are keyed by SHA-256 of the text + `max_ai` + every version** (`SERVICE_VERSION` in `detector/verify.py`,

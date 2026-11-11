@@ -47,7 +47,7 @@ def weights(rows):
     return np.array(w) / sum(w)
 
 
-def crop(text, rng, words=260):
+def crop(text, rng, words=200):
     w = text.split()
     if len(w) <= words:
         return text
@@ -61,8 +61,7 @@ def evaluate(model, tok, val, max_len, bs=16):
     probs = []
     for i in range(0, len(val), bs):
         enc = tok([r["text"] for r in val[i:i + bs]], truncation=True, max_length=512, padding=True, return_tensors="pt").to("cuda")
-        with torch.autocast("cuda", dtype=torch.float16):
-            lg = model(**enc).float()
+        lg = model(**enc).float()
         probs += torch.softmax(lg, -1).cpu().tolist()
     model.train()
     y = [int(r["label"] != 0) for r in val]
@@ -77,12 +76,14 @@ def evaluate(model, tok, val, max_len, bs=16):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
-    ap.add_argument("--epochs", type=float, default=2.0)
-    ap.add_argument("--max-len", type=int, default=320)
+    ap.add_argument("--epochs", type=float, default=1.0)
+    ap.add_argument("--max-len", type=int, default=256)
     ap.add_argument("--bs", type=int, default=8)
     ap.add_argument("--accum", type=int, default=2)
     ap.add_argument("--lr", type=float, default=2e-4)
     ap.add_argument("--r", type=int, default=16)
+    ap.add_argument("--max-steps", type=int, default=0, help="stop early (smoke test); 0 = full schedule")
+    ap.add_argument("--no-save", action="store_true")
     ap.add_argument("--init", default=BASE, help="start from this model dir (to continue a previous run)")
     args = ap.parse_args()
     out = ROOT / args.out
@@ -112,7 +113,6 @@ def main():
         model.to("cuda")
         model.base_model.model.model.gradient_checkpointing_enable()
         opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr, weight_decay=0.01)
-        scaler = torch.amp.GradScaler("cuda")
         w = weights(rows)
         rng = random.Random(0)
         nprng = np.random.default_rng(0)
@@ -120,28 +120,26 @@ def main():
         warm = max(1, steps // 20)
         sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1, s / steps))))
         cw = torch.tensor([1.0, 1.0, 1.0, 1.0], device="cuda")
-        say("before:", evaluate(model, tok, val, args.max_len))
+        if not args.no_save:
+            say("before:", evaluate(model, tok, val, args.max_len))
         t0 = time.time()
         model.train()
         best = None
-        for step in range(steps):
+        for step in range(min(steps, args.max_steps) if args.max_steps else steps):
             for _ in range(args.accum):
                 idx = nprng.choice(len(rows), size=args.bs, p=w)
                 batch = [rows[i] for i in idx]
                 enc = tok([crop(r["text"], rng) for r in batch], truncation=True, max_length=args.max_len,
                           padding=True, return_tensors="pt").to("cuda")
                 y = torch.tensor([r["label"] for r in batch], device="cuda")
-                with torch.autocast("cuda", dtype=torch.float16):
-                    lg = model(**enc)
+                lg = model(**enc)          # fp32: on this GTX 1660 Ti fp16 matmuls run ~7x slower (0.6 vs 4.4 TFLOPS)
                 loss = torch.nn.functional.cross_entropy(lg.float(), y, weight=cw)
                 # extra binary term: human vs anything-AI, the decision the detector actually makes
                 pb = torch.softmax(lg.float(), -1)[:, 0].clamp(1e-6, 1 - 1e-6)
                 loss = loss + torch.nn.functional.binary_cross_entropy(pb, (y == 0).float())
-                scaler.scale(loss / args.accum).backward()
-            scaler.unscale_(opt)
+                (loss / args.accum).backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            scaler.step(opt)
-            scaler.update()
+            opt.step()
             opt.zero_grad(set_to_none=True)
             sched.step()
             if step % 50 == 0:
@@ -149,8 +147,11 @@ def main():
             if (step + 1) % 300 == 0 or step == steps - 1:
                 m = evaluate(model, tok, val, args.max_len)
                 say(f"val @ {step + 1}: {m}")
+        if args.no_save:
+            say(f"smoke test done, peak VRAM {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB")
+            return
         merged = model.merge_and_unload()
-        merged.half().save_pretrained(out, safe_serialization=True)
+        merged.save_pretrained(out, safe_serialization=True)   # fp32: what the GPU runs fastest
         tok.save_pretrained(out)
         say(f"saved {out} in {time.time() - t0:.0f}s")
     finally:

@@ -2,23 +2,25 @@
 
 A second check beside the model: the model says *how AI* a text reads, this says *what to change*. Each hit has
 a rule id, a severity, the character span, and a fix an agent can apply.
-  strong = FAIL on its own (stock LLM phrases, leftover placeholders/markdown: nobody types these in an email)
-  soft   = listed, not a FAIL on its own (common in human writing too; worth a second look)
+  strong = FAIL on its own: leftover placeholders, markdown, a pile of distinct LLM-favourite words (no person
+           leaves these in a real message)
+  soft   = listed, not a FAIL on its own: stock openers/closers ("I look forward to hearing from you" is ordinary
+           human email: Sol round 1 found it blocking 4 human texts), em dashes, "not just X but Y", ...
 Bump TELLS_VERSION whenever a rule changes: it is part of every verdict key.
 """
 from __future__ import annotations
 
 import re
 
-TELLS_VERSION = 2
+TELLS_VERSION = 3
 
 # (id, severity, regex, why, fix)
 _RULES = [
-    ("stock-opener", "strong",
+    ("stock-opener", "soft",
      r"\b(I hope (this|my) (email|message|note) finds you( well)?|I hope you('re| are) (doing )?well\b(?! enough)|I am writing to (express|inquire)|"
      r"I wanted to reach out|I trust this (email|message) finds you)",
      "stock LLM email opener", "start with the point, or one specific line about them"),
-    ("stock-closer", "strong",
+    ("stock-closer", "soft",
      r"\b(I look forward to (the opportunity|hearing from you|discussing)|Thank you for (your time and consideration|considering my application)|"
      r"Please (do not|don't) hesitate to (reach out|contact)|Feel free to reach out|I would welcome the opportunity)",
      "stock LLM closing line", "end with one concrete next step in your own words, or just your name"),

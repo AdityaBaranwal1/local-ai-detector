@@ -79,7 +79,7 @@ class Engine:
         if self.gpu is None:
             try:
                 g = copy.copy(self._cpu())
-                g.model = copy.deepcopy(g.model).half().to("cuda").eval()
+                g.model = copy.deepcopy(g.model).to("cuda").eval()   # fp32: fp16 is ~7x slower on this GPU
                 g.device = "cuda"
                 self.gpu = g
             except torch.OutOfMemoryError:

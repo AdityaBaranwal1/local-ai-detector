@@ -1,0 +1,12 @@
+{
+  "frozen_at": "2026-11-11T21:44:18.910797+00:00",
+  "texts_file_sha256": "fa465126e7b4e635f0cda33440424e24e93ecd74ae41cbc096aaa7229ca58221",
+  "counts": {
+    "human_non_native": 30,
+    "human_native": 30,
+    "ai_raw": 20,
+    "ai_casual_or_humanized": 30,
+    "ai_polished_human": 10
+  },
+  "note": "All texts selected/generated before any detector test; no outcome-based sample removal or replacement."
+}

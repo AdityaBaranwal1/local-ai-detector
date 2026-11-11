@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "engine": "tropa-mini-ai-text-detector@10fecd08+hybrid",
+  "steps": {
+    "split": {
+      "ok": true,
+      "version": "regex v1"
+    },
+    "model": {
+      "ok": true,
+      "version": "tropa-mini-ai-text-detector@10fecd08+hybrid",
+      "where": "on disk, loads on use"
+    },
+    "drivers": {
+      "ok": true,
+      "version": "leave-one-out <= 225 words, 150-word windows above"
+    },
+    "tells": {
+      "ok": true,
+      "version": "v2, 11 rules"
+    }
+  },
+  "today": {
+    "checks": 32,
+    "pass": 11,
+    "fail": 21,
+    "stored": 32
+  },
+  "in_ram": false,
+  "on_gpu": false,
+  "gpu_lock_held": false
+}

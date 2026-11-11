@@ -48,8 +48,10 @@ def main():
     human_email = ("Hey Sam, quick one - can we push Thursday's review to Friday at 2? Two things are still open: "
                    "the freight numbers for October don't match what finance sent (off by about 4k), and nobody has "
                    "signed off on the new vendor yet. I can chase finance today. Can you ping Maria about the vendor? Thanks, Raj")
-    code, v = post({"text": human_email + " I hope this email finds you well.", "fresh": FRESH})
-    check("strong tell alone -> FAIL", v.get("verdict") == "FAIL" and any(p.get("rule") == "stock-opener" for p in v["problems"]), v.get("summary", "")[:90])
+    code, v = post({"text": human_email + " I hope this email finds you well. I look forward to hearing from you.", "fresh": FRESH})
+    check("stock opener/closer alone stays PASS (soft tell, listed)", v.get("verdict") == "PASS" and any(p.get("rule") == "stock-opener" for p in v["problems"]), v.get("summary", "")[:90])
+    code, v = post({"text": human_email + " It's a testament to our meticulous, seamless and pivotal synergy.", "fresh": FRESH})
+    check("pile of LLM words -> FAIL (strong tell)", v.get("verdict") == "FAIL" and any(p.get("rule") == "llm-vocab" and p.get("severity") == "strong" for p in v["problems"]), v.get("summary", "")[:90])
     code, v = post({"text": "Hi [Hiring Manager Name], " + human_email, "fresh": FRESH})
     check("placeholder -> FAIL", v.get("verdict") == "FAIL" and any(p.get("rule") == "placeholder" for p in v["problems"]))
     code, v = post({"text": human_email, "fresh": FRESH})

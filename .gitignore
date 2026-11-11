@@ -11,3 +11,4 @@ train/data/
 test/
 eval/runs/
 models/
+.venv-lightning/

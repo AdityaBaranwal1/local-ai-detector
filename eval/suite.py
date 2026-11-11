@@ -43,13 +43,24 @@ def group(src, label):
     return "AI raw"
 
 
+def _zg_keys():
+    f = ROOT / "test/zerogpt_heldout.json"
+    return {key(r["text"]) for r in json.loads(f.read_text())} if f.exists() else set()
+
+
+ZG_KEYS = _zg_keys()
+
+
 def load_sets():
     rows = []
     for r in json.loads((E / "scores.json").read_text()):
         if len(r["text"].split()) >= 50:
-            rows.append({"text": r["text"], "label": r["label"], "src": "eval/" + r["src"], "zerogpt": None})
+            rows.append({"text": r["text"], "label": 0 if r["label"] == 0 else 1, "src": "eval/" + r["src"], "zerogpt": None})
     for l in (ROOT / "test/heldout.jsonl").read_text().splitlines():
         r = json.loads(l)
+        # Jabarian's test split is 3.4k long passages: a stable quarter is plenty (keep every ZeroGPT-checked one)
+        if r["src"].startswith("jabarian/") and int(key(r["text"])[:4], 16) % 4 and key(r["text"]) not in ZG_KEYS:
+            continue
         rows.append({"text": r["text"], "label": 0 if r["label"] == 0 else 1, "src": r["src"], "zerogpt": None})
     for r in json.loads((E / "sites/results.json").read_text()):
         rows.append({"text": r["text"], "label": 0 if r["id"].startswith("human") else 1,
@@ -74,7 +85,11 @@ def load_sets():
     return out
 
 
-def score_probs(model, rows, name):
+def score_probs(model, rows, name, bs=16):
+    """Class probabilities per text, exactly as the service computes them (sentence-aligned chunks, length-weighted
+    mean), but batched across texts and sorted by length so the GPU isn't padding one short chunk at a time."""
+    from detector.engines import _chunks
+
     cache_f = RUNS / f"{name}.json"
     cache = json.loads(cache_f.read_text()) if cache_f.exists() else {}
     todo = [r for r in rows if r["k"] not in cache]
@@ -84,12 +99,26 @@ def score_probs(model, rows, name):
         lock.acquire()
         try:
             eng.load("cuda")
-            eng.model.half()
+            pieces = []                                  # (row index, chunk text, n tokens)
             for i, r in enumerate(todo):
-                cache[r["k"]] = eng.score(r["text"])["classes"]
-                if i % 500 == 499:
-                    cache_f.write_text(json.dumps(cache))
-                    print(f"  scored {i + 1}/{len(todo)}", flush=True)
+                for piece, n in (list(_chunks(eng.tok, r["text"], eng.max_len - 16)) or [(r["text"], 1)]):
+                    pieces.append((i, piece, n))
+            order = sorted(range(len(pieces)), key=lambda j: pieces[j][2])
+            out = [None] * len(pieces)
+            for b in range(0, len(order), bs):
+                idx = order[b:b + bs]
+                for j, p in zip(idx, eng._probs([pieces[j][1] for j in idx])):
+                    out[j] = p
+                if (b // bs) % 50 == 0:
+                    print(f"  chunks {b}/{len(pieces)}", flush=True)
+            acc = {}
+            for (i, _, n), p in zip(pieces, out):
+                a = acc.setdefault(i, [{}, 0])
+                for k, v in p.items():
+                    a[0][k] = a[0].get(k, 0.0) + v * n
+                a[1] += n
+            for i, (sums, tot) in acc.items():
+                cache[todo[i]["k"]] = {k: v / tot for k, v in sums.items()}
             eng.unload()
             torch.cuda.empty_cache()
         finally:

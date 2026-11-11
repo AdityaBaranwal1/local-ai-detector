@@ -56,8 +56,7 @@ def main(engines):
             else:
                 eng = CLASSIFIERS[name]()
                 eng.load("cuda")
-                eng.model.half()
-                for r in rows:
+                    for r in rows:
                     if name not in r:
                         s = eng.score(r["text"])
                         r[name] = s["p_ai"]

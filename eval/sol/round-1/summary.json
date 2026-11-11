@@ -1,0 +1,1087 @@
+{
+  "coverage": {
+    "ours": 120,
+    "zerogpt": 120,
+    "verify": 120
+  },
+  "category": {
+    "human_native": {
+      "ours": {
+        "n": 30,
+        "flagged": 2,
+        "rate": 0.06666666666666667,
+        "wilson95": [
+          0.018477023791270378,
+          0.2132345836261692
+        ]
+      },
+      "zerogpt": {
+        "n": 30,
+        "flagged": 0,
+        "rate": 0.0,
+        "wilson95": [
+          0,
+          0.11351339317396876
+        ]
+      },
+      "verify": {
+        "n": 30,
+        "flagged": 2,
+        "rate": 0.06666666666666667,
+        "wilson95": [
+          0.018477023791270378,
+          0.2132345836261692
+        ]
+      }
+    },
+    "human_non_native": {
+      "ours": {
+        "n": 30,
+        "flagged": 3,
+        "rate": 0.1,
+        "wilson95": [
+          0.03459988874733419,
+          0.25621082579184085
+        ]
+      },
+      "zerogpt": {
+        "n": 30,
+        "flagged": 0,
+        "rate": 0.0,
+        "wilson95": [
+          0,
+          0.11351339317396876
+        ]
+      },
+      "verify": {
+        "n": 30,
+        "flagged": 7,
+        "rate": 0.23333333333333334,
+        "wilson95": [
+          0.11792388144489496,
+          0.40928326158122164
+        ]
+      }
+    },
+    "ai_raw": {
+      "ours": {
+        "n": 20,
+        "flagged": 19,
+        "rate": 0.95,
+        "wilson95": [
+          0.763868806553258,
+          0.9911185511992047
+        ]
+      },
+      "zerogpt": {
+        "n": 20,
+        "flagged": 20,
+        "rate": 1.0,
+        "wilson95": [
+          0.8388748419471806,
+          1
+        ]
+      },
+      "verify": {
+        "n": 20,
+        "flagged": 19,
+        "rate": 0.95,
+        "wilson95": [
+          0.763868806553258,
+          0.9911185511992047
+        ]
+      }
+    },
+    "ai_casual_or_humanized": {
+      "ours": {
+        "n": 30,
+        "flagged": 26,
+        "rate": 0.8666666666666667,
+        "wilson95": [
+          0.703186733179637,
+          0.9469034451594526
+        ]
+      },
+      "zerogpt": {
+        "n": 30,
+        "flagged": 30,
+        "rate": 1.0,
+        "wilson95": [
+          0.8864866068260312,
+          0.9999999999999999
+        ]
+      },
+      "verify": {
+        "n": 30,
+        "flagged": 28,
+        "rate": 0.9333333333333333,
+        "wilson95": [
+          0.7867654163738308,
+          0.9815229762087295
+        ]
+      }
+    },
+    "ai_polished_human": {
+      "ours": {
+        "n": 10,
+        "flagged": 8,
+        "rate": 0.8,
+        "wilson95": [
+          0.49016247153664183,
+          0.9433178485456247
+        ]
+      },
+      "zerogpt": {
+        "n": 10,
+        "flagged": 9,
+        "rate": 0.9,
+        "wilson95": [
+          0.5958499732047615,
+          0.9821237869049271
+        ]
+      },
+      "verify": {
+        "n": 10,
+        "flagged": 8,
+        "rate": 0.8,
+        "wilson95": [
+          0.49016247153664183,
+          0.9433178485456247
+        ]
+      }
+    }
+  },
+  "overall": {
+    "ours": {
+      "n": 120,
+      "total": 120,
+      "tp": 53,
+      "tn": 55,
+      "fp": 5,
+      "fn": 7,
+      "accuracy": 0.9,
+      "specificity": 0.9166666666666666,
+      "sensitivity": 0.8833333333333333,
+      "balanced_accuracy": 0.8999999999999999
+    },
+    "zerogpt": {
+      "n": 120,
+      "total": 120,
+      "tp": 59,
+      "tn": 60,
+      "fp": 0,
+      "fn": 1,
+      "accuracy": 0.9916666666666667,
+      "specificity": 1.0,
+      "sensitivity": 0.9833333333333333,
+      "balanced_accuracy": 0.9916666666666667
+    },
+    "verify": {
+      "n": 120,
+      "total": 120,
+      "tp": 55,
+      "tn": 51,
+      "fp": 9,
+      "fn": 5,
+      "accuracy": 0.8833333333333333,
+      "specificity": 0.85,
+      "sensitivity": 0.9166666666666666,
+      "balanced_accuracy": 0.8833333333333333
+    }
+  },
+  "excluding_polished": {
+    "ours": {
+      "n": 110,
+      "total": 110,
+      "tp": 45,
+      "tn": 55,
+      "fp": 5,
+      "fn": 5,
+      "accuracy": 0.9090909090909091,
+      "specificity": 0.9166666666666666,
+      "sensitivity": 0.9,
+      "balanced_accuracy": 0.9083333333333333
+    },
+    "zerogpt": {
+      "n": 110,
+      "total": 110,
+      "tp": 50,
+      "tn": 60,
+      "fp": 0,
+      "fn": 0,
+      "accuracy": 1.0,
+      "specificity": 1.0,
+      "sensitivity": 1.0,
+      "balanced_accuracy": 1.0
+    },
+    "verify": {
+      "n": 110,
+      "total": 110,
+      "tp": 47,
+      "tn": 51,
+      "fp": 9,
+      "fn": 3,
+      "accuracy": 0.8909090909090909,
+      "specificity": 0.85,
+      "sensitivity": 0.94,
+      "balanced_accuracy": 0.895
+    }
+  },
+  "scorecard": {
+    "ours": 9.033333333333333,
+    "zerogpt": 10.0,
+    "verify": 9.033333333333333
+  },
+  "paired": {
+    "n": 110,
+    "ours_only_correct": [],
+    "zerogpt_only_correct": [
+      "GH02",
+      "H005",
+      "H048",
+      "H009",
+      "H003",
+      "S004",
+      "S002",
+      "GH03",
+      "H058",
+      "OH03"
+    ],
+    "mcnemar_exact_two_sided_p": 0.001953125,
+    "accuracy_difference": -0.09090909090909091
+  },
+  "at_least_as_good": false,
+  "versions": {
+    "{\"engine\": \"tropa-mini-ai-text-detector@10fecd08+hybrid\", \"service\": 1, \"tells\": 2}": 120
+  },
+  "endpoint_score_disagreements": [],
+  "by_model": {
+    "claude-haiku-5-5": {
+      "ours": {
+        "n": 14,
+        "flagged": 14,
+        "rate": 1.0,
+        "wilson95": [
+          0.7846891972623643,
+          1
+        ]
+      },
+      "zerogpt": {
+        "n": 14,
+        "flagged": 14,
+        "rate": 1.0,
+        "wilson95": [
+          0.7846891972623643,
+          1
+        ]
+      },
+      "verify": {
+        "n": 14,
+        "flagged": 14,
+        "rate": 1.0,
+        "wilson95": [
+          0.7846891972623643,
+          1
+        ]
+      }
+    },
+    "gemini-3-flash": {
+      "ours": {
+        "n": 15,
+        "flagged": 13,
+        "rate": 0.8666666666666667,
+        "wilson95": [
+          0.6211801716767764,
+          0.9626387408969346
+        ]
+      },
+      "zerogpt": {
+        "n": 15,
+        "flagged": 15,
+        "rate": 1.0,
+        "wilson95": [
+          0.7961166989641515,
+          1
+        ]
+      },
+      "verify": {
+        "n": 15,
+        "flagged": 14,
+        "rate": 0.9333333333333333,
+        "wilson95": [
+          0.7018347012621998,
+          0.9881331045067315
+        ]
+      }
+    },
+    "gpt-6.1-sol": {
+      "ours": {
+        "n": 6,
+        "flagged": 4,
+        "rate": 0.6666666666666666,
+        "wilson95": [
+          0.299993315138392,
+          0.9032285888942195
+        ]
+      },
+      "zerogpt": {
+        "n": 6,
+        "flagged": 6,
+        "rate": 1.0,
+        "wilson95": [
+          0.6096657120978346,
+          1
+        ]
+      },
+      "verify": {
+        "n": 6,
+        "flagged": 4,
+        "rate": 0.6666666666666666,
+        "wilson95": [
+          0.299993315138392,
+          0.9032285888942195
+        ]
+      }
+    },
+    "gpt-oss-120b-medium": {
+      "ours": {
+        "n": 15,
+        "flagged": 14,
+        "rate": 0.9333333333333333,
+        "wilson95": [
+          0.7018347012621998,
+          0.9881331045067315
+        ]
+      },
+      "zerogpt": {
+        "n": 15,
+        "flagged": 15,
+        "rate": 1.0,
+        "wilson95": [
+          0.7961166989641515,
+          1
+        ]
+      },
+      "verify": {
+        "n": 15,
+        "flagged": 15,
+        "rate": 1.0,
+        "wilson95": [
+          0.7961166989641515,
+          1
+        ]
+      }
+    }
+  },
+  "hard_subtypes": {
+    "casual": {
+      "ours": {
+        "n": 8,
+        "flagged": 8,
+        "rate": 1.0,
+        "wilson95": [
+          0.6755924351161198,
+          1
+        ]
+      },
+      "zerogpt": {
+        "n": 8,
+        "flagged": 8,
+        "rate": 1.0,
+        "wilson95": [
+          0.6755924351161198,
+          1
+        ]
+      },
+      "verify": {
+        "n": 8,
+        "flagged": 8,
+        "rate": 1.0,
+        "wilson95": [
+          0.6755924351161198,
+          1
+        ]
+      }
+    },
+    "humanize_paraphrase": {
+      "ours": {
+        "n": 8,
+        "flagged": 8,
+        "rate": 1.0,
+        "wilson95": [
+          0.6755924351161198,
+          1
+        ]
+      },
+      "zerogpt": {
+        "n": 8,
+        "flagged": 8,
+        "rate": 1.0,
+        "wilson95": [
+          0.6755924351161198,
+          1
+        ]
+      },
+      "verify": {
+        "n": 8,
+        "flagged": 8,
+        "rate": 1.0,
+        "wilson95": [
+          0.6755924351161198,
+          1
+        ]
+      }
+    },
+    "lowercase": {
+      "ours": {
+        "n": 7,
+        "flagged": 6,
+        "rate": 0.8571428571428571,
+        "wilson95": [
+          0.4868721707256811,
+          0.9743203756552565
+        ]
+      },
+      "zerogpt": {
+        "n": 7,
+        "flagged": 7,
+        "rate": 1.0,
+        "wilson95": [
+          0.6456695649333126,
+          1
+        ]
+      },
+      "verify": {
+        "n": 7,
+        "flagged": 6,
+        "rate": 0.8571428571428571,
+        "wilson95": [
+          0.4868721707256811,
+          0.9743203756552565
+        ]
+      }
+    },
+    "non_native_imitation": {
+      "ours": {
+        "n": 7,
+        "flagged": 4,
+        "rate": 0.5714285714285714,
+        "wilson95": [
+          0.2504583645276572,
+          0.8417801447485302
+        ]
+      },
+      "zerogpt": {
+        "n": 7,
+        "flagged": 7,
+        "rate": 1.0,
+        "wilson95": [
+          0.6456695649333126,
+          1
+        ]
+      },
+      "verify": {
+        "n": 7,
+        "flagged": 6,
+        "rate": 0.8571428571428571,
+        "wilson95": [
+          0.4868721707256811,
+          0.9743203756552565
+        ]
+      }
+    }
+  },
+  "latencies": {
+    "ours": {
+      "median": 6.8945519886910915,
+      "sum_seconds": 883.3969767633826
+    },
+    "zerogpt": {
+      "median": 0.9827299835160375,
+      "sum_seconds": 143.24204143881798
+    },
+    "verify": {
+      "median": 6.914285708684474,
+      "sum_seconds": 876.3411620166153
+    }
+  },
+  "lengths": {
+    "human_native": {
+      "min": 66,
+      "median": 196.0,
+      "max": 388
+    },
+    "human_non_native": {
+      "min": 112,
+      "median": 173.5,
+      "max": 288
+    },
+    "ai_raw": {
+      "min": 84,
+      "median": 124.5,
+      "max": 233
+    },
+    "ai_casual_or_humanized": {
+      "min": 88,
+      "median": 119.5,
+      "max": 233
+    },
+    "ai_polished_human": {
+      "min": 113,
+      "median": 153.5,
+      "max": 200
+    }
+  },
+  "errors": [],
+  "engine_devices": {
+    "cpu": 120
+  },
+  "ours_errors": [
+    {
+      "id": "KP04",
+      "category": "ai_polished_human",
+      "model": "claude-haiku-5-5",
+      "subtype": "polished_human",
+      "ours": 0.0024,
+      "zero": 0.613,
+      "gate": "PASS",
+      "genre": "reviews",
+      "quote": "A year ago, it was rumored that the central character in Erich Maria Remarque’s new novel was based on the Marquis Alfonso de Portago, the Spanish nobleman who died while driving in the 1957 Mille Miglia race. If that was Mr. Remarque’s intention, he has achieved a notable failur",
+      "classes": {
+        "human": 0.0656,
+        "ai": 0.0024,
+        "ai_edited": 0.9306,
+        "humanized": 0.0014
+      },
+      "verify_problems": []
+    },
+    {
+      "id": "GH02",
+      "category": "ai_casual_or_humanized",
+      "model": "gemini-3-flash",
+      "subtype": "lowercase",
+      "ours": 0.1206,
+      "zero": 1.0,
+      "gate": "PASS",
+      "genre": "application_answer",
+      "quote": "i wanted to work here mostly because i actually use the tool every single day for managing my personal side projects and it just makes sense to me compared to the clunky stuff out there. also i spent a couple of years helping run the front desk and inventory at my cousin's bike s",
+      "classes": {
+        "human": 0.8497,
+        "ai": 0.1206,
+        "ai_edited": 0.0006,
+        "humanized": 0.029
+      },
+      "verify_problems": []
+    },
+    {
+      "id": "H005",
+      "category": "human_non_native",
+      "model": null,
+      "subtype": null,
+      "ours": 0.9999,
+      "zero": 0.0,
+      "gate": "FAIL",
+      "genre": "formal_complaint_or_letter",
+      "quote": "17/6/2000\n\nSaturday \n\nDear Sir or Madam,\n\nI am writing to inform you about my disappointing evening  I spent at the play \"Over The Rainbow\" presented by The Circle Theatre.\n\nThe problems started at the beginning. Although it was written 19.30 in the advertisement, the play began ",
+      "classes": {
+        "human": 0.0001,
+        "ai": 0.0,
+        "ai_edited": 0.0,
+        "humanized": 0.9999
+      },
+      "verify_problems": [
+        {
+          "check": "model",
+          "msg": "reads 100% AI (PASS needs under 30%)"
+        },
+        {
+          "check": "model",
+          "start": 11,
+          "end": 19,
+          "flag": "mid",
+          "without": 0.9998,
+          "msg": "drives the score: 100.0% -> 100.0% without this sentence",
+          "quote": "Saturday"
+        },
+        {
+          "check": "model",
+          "start": 42,
+          "end": 172,
+          "flag": "ai",
+          "without": 0.9995,
+          "msg": "drives the score: 100.0% -> 100.0% without this sentence",
+          "quote": "I am writing to inform you about my disappointing evening  I spent at the play \"Over The Rainbow\" presented by The Circle Theatre."
+        },
+        {
+          "check": "model",
+          "start": 290,
+          "end": 435,
+          "flag": "ai",
+          "without": 0.9982,
+          "msg": "drives the score: 100.0% -> 99.8% without this sentence",
+          "quote": "In addition, a different actor was starring instead of Danny Brooks and this was the most disappointing thing that evening for me and my friends."
+        },
+        {
+          "check": "model",
+          "start": 437,
+          "end": 507,
+          "flag": "mid",
+          "without": 0.9997,
+          "msg": "drives the score: 100.0% -> 100.0% without this sentence",
+          "quote": "I was told  to be able to get discounts, however, I could not get any."
+        },
+        {
+          "check": "model",
+          "start": 508,
+          "end": 614,
+          "flag": "ai",
+          "without": 0.9994,
+          "msg": "drives the score: 100.0% -> 99.9% without this sentence",
+          "quote": "I also went to your theatre restaurant after the show, but it was closed because it was being redecorated."
+        },
+        {
+          "check": "model",
+          "start": 615,
+          "end": 668,
+          "flag": "mid",
+          "without": 0.9997,
+          "msg": "drives the score: 100.0% -> 100.0% without this sentence",
+          "quote": "As a result, I could not have my perfect evening out."
+        },
+        {
+          "check": "model",
+          "start": 670,
+          "end": 765,
+          "flag": "mid",
+          "without": 0.9997,
+          "msg": "drives the score: 100.0% -> 100.0% without this sentence",
+          "quote": "For all the reasons I have mentioned above, I would like to get at least half of my money back."
+        },
+        {
+          "check": "model",
+          "start": 767,
+          "end": 808,
+          "flag": "mid",
+          "without": 0.9997,
+          "msg": "drives the score: 100.0% -> 100.0% without this sentence",
+          "quote": "I am looking forward to hearing from you."
+        },
+        {
+          "check": "model",
+          "start": 810,
+          "end": 827,
+          "flag": "ai",
+          "without": 0.9994,
+          "msg": "drives the score: 100.0% -> 99.9% without this sentence",
+          "quote": "Yours faithfully,"
+        }
+      ]
+    },
+    {
+      "id": "H048",
+      "category": "human_native",
+      "model": null,
+      "subtype": null,
+      "ours": 0.6027,
+      "zero": 0.0,
+      "gate": "FAIL",
+      "genre": "reference_request",
+      "quote": "My dear Mr. Moyer:\n\nI am looking for a position as cashier with the Bright Weaving Company. My duties there would be similar in every way to my work in your office, and a recommendation from you would help greatly.\n\nMr. Sawyer, the first vice-president of the Bright Weaving Compa",
+      "classes": {
+        "human": 0.3718,
+        "ai": 0.6027,
+        "ai_edited": 0.0013,
+        "humanized": 0.0243
+      },
+      "verify_problems": [
+        {
+          "check": "model",
+          "msg": "reads 60% AI (PASS needs under 30%)"
+        },
+        {
+          "check": "model",
+          "start": 0,
+          "end": 18,
+          "flag": "ai",
+          "without": 0.2588,
+          "msg": "drives the score: 60% -> 26% without this sentence",
+          "quote": "My dear Mr. Moyer:"
+        },
+        {
+          "check": "model",
+          "start": 92,
+          "end": 214,
+          "flag": "ai",
+          "without": 0.0149,
+          "msg": "drives the score: 60% -> 1% without this sentence",
+          "quote": "My duties there would be similar in every way to my work in your office, and a recommendation from you would help greatly."
+        },
+        {
+          "check": "model",
+          "start": 216,
+          "end": 361,
+          "flag": "ai",
+          "without": 0.0573,
+          "msg": "drives the score: 60% -> 6% without this sentence",
+          "quote": "Mr. Sawyer, the first vice-president of the Bright Weaving Company, knows you personally, hence an opinion from you would have particular effect."
+        }
+      ]
+    },
+    {
+      "id": "H009",
+      "category": "human_non_native",
+      "model": null,
+      "subtype": null,
+      "ours": 0.9996,
+      "zero": 0.0,
+      "gate": "FAIL",
+      "genre": "email_or_letter",
+      "quote": "Dear Sir,\n\nI am writing to complete about my being to the Circle Theatre during my last week's holiday in London. I have seen a musical show and it was not my favourite time.\n\nI am confusing because of playing different actor in place  Danny Brook. Secendly, the show started at 2",
+      "classes": {
+        "human": 0.0004,
+        "ai": 0.0,
+        "ai_edited": 0.0,
+        "humanized": 0.9996
+      },
+      "verify_problems": [
+        {
+          "check": "model",
+          "msg": "reads 100% AI (PASS needs under 30%)"
+        },
+        {
+          "check": "model",
+          "start": 0,
+          "end": 9,
+          "flag": "ai",
+          "without": 0.9988,
+          "msg": "drives the score: 100.0% -> 99.9% without this sentence",
+          "quote": "Dear Sir,"
+        },
+        {
+          "check": "model",
+          "start": 114,
+          "end": 174,
+          "flag": "ai",
+          "without": 0.9987,
+          "msg": "drives the score: 100.0% -> 99.9% without this sentence",
+          "quote": "I have seen a musical show and it was not my favourite time."
+        },
+        {
+          "check": "model",
+          "start": 176,
+          "end": 248,
+          "flag": "ai",
+          "without": 0.0001,
+          "msg": "drives the score: 100.0% -> 0.0% without this sentence",
+          "quote": "I am confusing because of playing different actor in place  Danny Brook."
+        },
+        {
+          "check": "model",
+          "start": 249,
+          "end": 285,
+          "flag": "ai",
+          "without": 0.9979,
+          "msg": "drives the score: 100.0% -> 99.8% without this sentence",
+          "quote": "Secendly, the show started at 20.15."
+        },
+        {
+          "check": "model",
+          "start": 286,
+          "end": 351,
+          "flag": "ai",
+          "without": 0.9979,
+          "msg": "drives the score: 100.0% -> 99.8% without this sentence",
+          "quote": "This is why I was feeling invited to your restaurant after  show."
+        },
+        {
+          "check": "model",
+          "start": 426,
+          "end": 513,
+          "flag": "mid",
+          "without": 0.9991,
+          "msg": "drives the score: 100.0% -> 99.9% without this sentence",
+          "quote": "I would like to add that being a student I find discounts very important for my budget."
+        }
+      ]
+    },
+    {
+      "id": "H003",
+      "category": "human_non_native",
+      "model": null,
+      "subtype": null,
+      "ours": 0.9991,
+      "zero": 0.0,
+      "gate": "FAIL",
+      "genre": "formal_complaint_or_letter",
+      "quote": "Dear The Manager of the Circle Theatre,\n\nWhile I was staying in London for a holiday, I went to the Circle Theatre to see OVER THE RAINBOW in the evening. That made me feel disappointed.\n\nFirst of all, the actor was different from  your advertisement. I meant he was not Danny Bro",
+      "classes": {
+        "human": 0.0009,
+        "ai": 0.0,
+        "ai_edited": 0.0,
+        "humanized": 0.999
+      },
+      "verify_problems": [
+        {
+          "check": "model",
+          "msg": "reads 100% AI (PASS needs under 30%)"
+        },
+        {
+          "check": "model",
+          "start": 155,
+          "end": 186,
+          "flag": "ai",
+          "without": 0.9949,
+          "msg": "drives the score: 99.9% -> 99.5% without this sentence",
+          "quote": "That made me feel disappointed."
+        },
+        {
+          "check": "model",
+          "start": 252,
+          "end": 283,
+          "flag": "ai",
+          "without": 0.9933,
+          "msg": "drives the score: 99.9% -> 99.3% without this sentence",
+          "quote": "I meant he was not Danny Brook."
+        },
+        {
+          "check": "model",
+          "start": 678,
+          "end": 731,
+          "flag": "mid",
+          "without": 0.9977,
+          "msg": "drives the score: 99.9% -> 99.8% without this sentence",
+          "quote": "Lastly, I don't think that it was my perfect evening."
+        },
+        {
+          "check": "model",
+          "start": 806,
+          "end": 823,
+          "flag": "ai",
+          "without": 0.9918,
+          "msg": "drives the score: 99.9% -> 99.2% without this sentence",
+          "quote": "Yours faithfully,"
+        }
+      ]
+    },
+    {
+      "id": "S004",
+      "category": "ai_casual_or_humanized",
+      "model": "gpt-6.1-sol",
+      "subtype": "non_native_imitation",
+      "ours": 0.0943,
+      "zero": 1.0,
+      "gate": "PASS",
+      "genre": "reference_request",
+      "quote": "Hello Professor, I hope you remember me from the evening accounting class last spring. I was in the group which made presentation about the little bakery and its monthly expenses. I am now applying for an assistant job in a local company, and they ask me to give one teacher refer",
+      "classes": {
+        "human": 0.2783,
+        "ai": 0.0943,
+        "ai_edited": 0.0007,
+        "humanized": 0.6267
+      },
+      "verify_problems": []
+    },
+    {
+      "id": "S002",
+      "category": "ai_raw",
+      "model": "gpt-6.1-sol",
+      "subtype": null,
+      "ours": 0.025,
+      "zero": 1.0,
+      "gate": "PASS",
+      "genre": "linkedin_post",
+      "quote": "We finished moving our support documentation into a single searchable library this week. The useful part was not choosing a new platform. It was sitting with the support team and watching what happened when an answer could not be found. Different names for the same feature were s",
+      "classes": {
+        "human": 0.8133,
+        "ai": 0.025,
+        "ai_edited": 0.0482,
+        "humanized": 0.1135
+      },
+      "verify_problems": []
+    },
+    {
+      "id": "GH03",
+      "category": "ai_casual_or_humanized",
+      "model": "gemini-3-flash",
+      "subtype": "non_native_imitation",
+      "ours": 0.1524,
+      "zero": 1.0,
+      "gate": "FAIL",
+      "genre": "cover_letter",
+      "quote": "Dear Manager, I am writing for apply to the receptionist position at your hotel. I saw your advertisement on the internet and I feel I am good fit because I have worked two years in small guest house near the city center. In that job I was greeting guests, managing reservations a",
+      "classes": {
+        "human": 0.2863,
+        "ai": 0.1524,
+        "ai_edited": 0.0007,
+        "humanized": 0.5606
+      },
+      "verify_problems": [
+        {
+          "check": "tells",
+          "rule": "stock-closer",
+          "severity": "strong",
+          "start": 598,
+          "end": 639,
+          "why": "stock LLM closing line",
+          "fix": "end with one concrete next step in your own words, or just your name",
+          "msg": "stock LLM closing line: end with one concrete next step in your own words, or just your name",
+          "quote": "Thank you for your time and consideration"
+        }
+      ]
+    },
+    {
+      "id": "H058",
+      "category": "human_native",
+      "model": null,
+      "subtype": null,
+      "ours": 0.994,
+      "zero": 0.0,
+      "gate": "FAIL",
+      "genre": "fiction",
+      "quote": "It was the first time any of us had laughed since the morning began.\n\nThe rider from Concord was as good as his word. He came spurring and whooping down the road, his horse kicking up clouds of dust, shouting:\n\n“They're a-coming!! By God, they're a-coming, they are”!!\n\nWe heard h",
+      "classes": {
+        "human": 0.006,
+        "ai": 0.0001,
+        "ai_edited": 0.0003,
+        "humanized": 0.9936
+      },
+      "verify_problems": [
+        {
+          "check": "model",
+          "msg": "reads 99% AI (PASS needs under 30%)"
+        },
+        {
+          "check": "model",
+          "start": 0,
+          "end": 68,
+          "flag": "ai",
+          "without": 0.0001,
+          "msg": "drives the score: 99.4% -> 0.0% without this sentence",
+          "quote": "It was the first time any of us had laughed since the morning began."
+        },
+        {
+          "check": "model",
+          "start": 118,
+          "end": 209,
+          "flag": "ai",
+          "without": 0.0004,
+          "msg": "drives the score: 99.4% -> 0.0% without this sentence",
+          "quote": "He came spurring and whooping down the road, his horse kicking up clouds of dust, shouting:"
+        },
+        {
+          "check": "model",
+          "start": 211,
+          "end": 230,
+          "flag": "ai",
+          "without": 0.0006,
+          "msg": "drives the score: 99.4% -> 0.1% without this sentence",
+          "quote": "“They're a-coming!!"
+        },
+        {
+          "check": "model",
+          "start": 231,
+          "end": 268,
+          "flag": "ai",
+          "without": 0.0009,
+          "msg": "drives the score: 99.4% -> 0.1% without this sentence",
+          "quote": "By God, they're a-coming, they are”!!"
+        },
+        {
+          "check": "model",
+          "start": 431,
+          "end": 527,
+          "flag": "ai",
+          "without": 0.0002,
+          "msg": "drives the score: 99.4% -> 0.0% without this sentence",
+          "quote": "I think you could have heard him a mile away, and he was bursting at every seam with importance."
+        },
+        {
+          "check": "model",
+          "start": 700,
+          "end": 754,
+          "flag": "ai",
+          "without": 0.0008,
+          "msg": "drives the score: 99.4% -> 0.1% without this sentence",
+          "quote": "That's understandable, and I appreciate the sentiment."
+        }
+      ]
+    },
+    {
+      "id": "OH03",
+      "category": "ai_casual_or_humanized",
+      "model": "gpt-oss-120b-medium",
+      "subtype": "non_native_imitation",
+      "ours": 0.4274,
+      "zero": 1.0,
+      "gate": "FAIL",
+      "genre": "cover_letter",
+      "quote": "Dear Hiring Manager,\n\nI am writing to apply for the receptionist position at the Grand Horizon Hotel. I have worked three years in a small guest house in my hometown, where I learned to manage front desk, answer phones and give informations to visitors. My english is improving an",
+      "classes": {
+        "human": 0.2614,
+        "ai": 0.4274,
+        "ai_edited": 0.0007,
+        "humanized": 0.3105
+      },
+      "verify_problems": [
+        {
+          "check": "model",
+          "msg": "reads 43% AI (PASS needs under 30%)"
+        },
+        {
+          "check": "model",
+          "start": 339,
+          "end": 427,
+          "flag": "mid",
+          "without": 0.1799,
+          "msg": "drives the score: 43% -> 18% without this sentence",
+          "quote": "I am very friendly and i enjoy making guests feel welcomed, even when the lobby is busy."
+        },
+        {
+          "check": "model",
+          "start": 428,
+          "end": 533,
+          "flag": "mid",
+          "without": 0.152,
+          "msg": "drives the score: 43% -> 15% without this sentence",
+          "quote": "I also have experience with handling cash and booking tours, which i think will be useful for your hotel."
+        },
+        {
+          "check": "model",
+          "start": 534,
+          "end": 634,
+          "flag": "mid",
+          "without": 0.0557,
+          "msg": "drives the score: 43% -> 6% without this sentence",
+          "quote": "I hope you consider my application, and i look forward to discuss how i can contribute to your team."
+        },
+        {
+          "check": "model",
+          "start": 636,
+          "end": 651,
+          "flag": "mid",
+          "without": 0.1974,
+          "msg": "drives the score: 43% -> 20% without this sentence",
+          "quote": "Sincerely,\nLena"
+        }
+      ]
+    },
+    {
+      "id": "GP03",
+      "category": "ai_polished_human",
+      "model": "gemini-3-flash",
+      "subtype": "polished_human",
+      "ours": 0.0534,
+      "zero": 0.0,
+      "gate": "PASS",
+      "genre": "fiction",
+      "quote": "She was becoming overly dramatic. I might have been more impressed if I had not remembered that she had played Hedda Gabler in her high school drama class. I certainly did not want her starting that broken record again.\n\nNothing is free in this entire world was all I could think ",
+      "classes": {
+        "human": 0.027,
+        "ai": 0.0534,
+        "ai_edited": 0.0023,
+        "humanized": 0.9173
+      },
+      "verify_problems": []
+    }
+  ]
+}
