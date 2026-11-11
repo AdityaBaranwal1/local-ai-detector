@@ -1,0 +1,18 @@
+AI detector benchmark 2026-11-11 13:35 · GTX 1660 Ti 6 GB / Ryzen 7 4800H (8 threads) · tropa-mini DeBERTa-v3-large · page = whole-text score + one 150-word window per sentence
+
+state before: in RAM False, on GPU False
+cold start (first check, 250 words): 4.1 s on cuda
+
+latency per check (median of runs), by text length:
+   words sentences   GPU s   CPU s  GPU words/s
+     100         6     0.6     0.9          178
+     250        14     2.4     4.0          104
+     500        34     8.4    14.7           59
+    1000        71    20.3    38.0           49
+    2000       144    43.8    87.4           46
+
+memory: service RAM 3.07 GiB (MemoryCurrent, incl. the CPU master copy); VRAM 1496 MiB while it holds the GPU
+4 checks of 250 words sent at once: all done in 9.7 s (each waited 2.4-9.7 s; served one at a time)
+render arriving while the detector idles on the GPU: got the lock after 0.1-1.4 s (3 tries); first CPU block above waited 2.0 s
+render arriving mid-check (2000 words): got the lock after 43.4 s (the check in flight finishes first)
+state after: on GPU False (gives the GPU back 60 s after the last check; RAM copy dropped after 30 min)

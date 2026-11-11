@@ -72,10 +72,10 @@ dt{color:var(--muted)} dd{margin:0;font-variant-numeric:tabular-nums;text-align:
       </div>
       <div id="tab-view" class="hidden">
         <div class="legend">
-          <span><span class="sw" style="background:var(--hl-ai)"></span>reads as AI</span>
-          <span><span class="sw" style="background:var(--hl-mid)"></span>borderline</span>
-          <span><span class="sw" style="border:1px solid var(--line)"></span>reads as human</span>
-          <span>hover a sentence for its score</span>
+          <span><span class="sw" style="background:var(--hl-ai)"></span><span id="legendAi">reads as AI</span></span>
+          <span><span class="sw" style="background:var(--hl-mid)"></span><span id="legendMid">borderline</span></span>
+          <span><span class="sw" style="border:1px solid var(--line)"></span><span id="legendOk">reads as human</span></span>
+          <span id="legendHow">hover a sentence for its score</span>
         </div>
         <div id="marked"></div>
       </div>
@@ -150,9 +150,15 @@ function show(text, d){
   $("#verdict").textContent = d.verdict_text;
   $("#meterbar").style.width = s + "%";
   $("#meterbar").style.background = colour(d.ai_score);
+  const drivers = d.mode === "drivers";
+  $("#legendAi").textContent = drivers ? "drives the AI score most" : "reads as AI";
+  $("#legendMid").textContent = drivers ? "adds to it" : "borderline";
+  $("#legendOk").textContent = drivers ? "little effect" : "reads as human";
+  $("#legendHow").textContent = drivers ? "short text: hover a sentence to see the score without it, rewrite the red ones first" : "hover a sentence for its score";
   $("#facts").innerHTML = [
-    ["Text that reads as AI", Math.round(d.ai_share * 100) + "% of words"],
-    ["Sentences flagged", `${d.sentences.filter(x => x.flag === "ai").length} of ${d.sentences.length}`],
+    drivers ? ["Sentences driving the score", `${d.sentences.filter(x => x.flag !== "ok").length} of ${d.sentences.length}`]
+            : ["Text that reads as AI", Math.round(d.ai_share * 100) + "% of words"],
+    ...(drivers ? [] : [["Sentences flagged", `${d.sentences.filter(x => x.flag === "ai").length} of ${d.sentences.length}`]]),
     ["Words", d.words],
     ["Took", (d.ms / 1000).toFixed(1) + " s on " + d.device.toUpperCase()],
   ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
@@ -168,7 +174,9 @@ function show(text, d){
   for (const x of d.sentences){
     html += esc(text.slice(pos, x.start));
     const cls = x.flag === "ai" ? "ai" : x.flag === "mid" ? "mid" : "";
-    html += `<span class="${cls}" title="${Math.round(x.score * 100)}% AI">${esc(text.slice(x.start, x.end))}</span>`;
+    const tip = drivers ? `${Math.round(d.ai_score * 100)}% AI → ${Math.round(x.without * 100)}% without this sentence`
+                        : `${Math.round(x.score * 100)}% AI`;
+    html += `<span class="${cls}" title="${tip}">${esc(text.slice(x.start, x.end))}</span>`;
     pos = x.end;
   }
   html += esc(text.slice(pos));

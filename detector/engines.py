@@ -90,9 +90,15 @@ class Classifier:
         labels = [self.model.config.id2label[i] for i in range(sm.shape[-1])]
         return [dict(zip([str(l).lower() for l in labels], map(float, row))) for row in sm]
 
+    SURE_NOT_HUMAN = 0.01
+
     def p_ai(self, probs):
-        # tropa-mini: P(ai) alone. Its model card's 1 - P(human) also counts "humanized" and "ai_edited", which
-        # fire on polished human writing (eval: 49 % vs 3 % of real college essays flagged at the 50 % line)
+        # tropa-mini: P(ai), except when the model is sure the text is not human (P(human) < 1 %): then 1 - P(human),
+        # so text it files under "humanized" still counts. Plain 1 - P(human) (the model card's score) flags polished
+        # human writing (49 % of real college essays vs 3-4 %); plain P(ai) let half of LLM-"humanized" AI text
+        # through (eval 2026-11-11: 50 % -> 72 % caught, native-English human false positives 1.7 % -> 1.9 %).
+        if "human" in probs and probs["human"] < self.SURE_NOT_HUMAN:
+            return 1.0 - probs["human"]
         return probs.get(self.ai_label, 0.0)
 
     def score(self, text: str) -> dict:

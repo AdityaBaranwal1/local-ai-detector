@@ -3,3 +3,4 @@ __pycache__/
 # evaluation inputs/outputs: third-party human texts + generated AI texts (re-creatable with eval/*.py)
 eval/data/
 eval/scores.json
+eval/sites/zerogpt_sample.json

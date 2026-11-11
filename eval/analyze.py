@@ -35,9 +35,10 @@ def table(name, score, rows):
 
 
 def main():
-    for r in ROWS:   # rows scored before the switch stored 1 - P(human); the detector uses P(ai) (README)
+    for r in ROWS:   # recompute with the service's rule (detector/engines.py Classifier.p_ai)
         if "tropa_classes" in r:
-            r["tropa"] = r["tropa_classes"]["ai"]
+            c = r["tropa_classes"]
+            r["tropa"] = 1 - c["human"] if c["human"] < 0.01 else c["ai"]
     allrows = [r for r in ROWS if "fakespot" in r and len(r["text"].split()) >= 50]
     raw = [r for r in allrows if not (r["label"] == 1 and r["src"].startswith("humanized/"))]
     hz = [r for r in allrows if r["label"] == 0 or r["src"].startswith("humanized/")]
