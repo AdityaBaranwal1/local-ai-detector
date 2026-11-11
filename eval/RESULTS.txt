@@ -1,0 +1,57 @@
+743 texts: 554 human, 66 raw AI, 32 AI rewritten to sound human, 91 human essays polished by GPT-4 (reported apart)
+
+Classifiers, every text. Human vs raw AI:
+  tropa        AUROC 0.990  catch@1%FP 60.6%  catch@5%FP 97.0%
+  desklib      AUROC 0.890  catch@1%FP 39.4%  catch@5%FP 62.1%
+  tmr          AUROC 0.479  catch@1%FP  7.6%  catch@5%FP 13.6%
+  fakespot     AUROC 0.764  catch@1%FP 22.7%  catch@5%FP 33.3%
+Human vs humanized AI:
+  tropa        AUROC 0.850  catch@1%FP  6.2%  catch@5%FP 50.0%
+  desklib      AUROC 0.633  catch@1%FP  0.0%  catch@5%FP  3.1%
+  tmr          AUROC 0.343  catch@1%FP  0.0%  catch@5%FP  0.0%
+  fakespot     AUROC 0.547  catch@1%FP  0.0%  catch@5%FP  0.0%
+
+Zero-shot subset (185 human, 66 raw AI):
+  tropa        AUROC 0.986  catch@1%FP 54.5%  catch@5%FP 98.5%
+  desklib      AUROC 0.889  catch@1%FP 39.4%  catch@5%FP 60.6%
+  tmr          AUROC 0.498  catch@1%FP  7.6%  catch@5%FP 13.6%
+  fakespot     AUROC 0.774  catch@1%FP 21.2%  catch@5%FP 33.3%
+  binoculars   AUROC 0.597  catch@1%FP  1.5%  catch@5%FP 12.1%
+  fastdetect   AUROC 0.557  catch@1%FP  7.6%  catch@5%FP  9.1%
+  combo(cv)    AUROC 0.974  catch@1%FP 15.2%  catch@5%FP 92.4%
+
+Flagged as AI at the 50% line, by source (human rows = false positives, AI rows = catch rate):
+source                                    tropa  desklib      tmr fakespot  zerogpt      n
+human/CS224N_real_145                        1%      51%     100%     100%       0%    145
+human/CollegeEssay_real_70                   3%      21%      36%      50%       3%     70
+human/HewlettStudentEssay_real_88            0%       6%      41%       2%       1%     88
+human/TOEFL_real_91                         25%      53%      86%      69%      53%     91
+human/email-enron-2001                       2%      15%      48%      22%              40
+human/news-2015                              2%      42%      60%      50%              40
+human/reddit-post                            0%       0%      42%      25%              40
+human/story-reddit-2018                      8%      15%      15%      28%              40
+ai/claude-fable-5-2                        100%      86%      29%      86%               7
+ai/claude-haiku-5-5                        100%     100%      57%      86%               7
+ai/claude-opus-5-5                          92%      75%      58%      92%              12
+ai/claude-sonnet-4-5-20250929              100%     100%      86%      86%               7
+ai/claude-sonnet-5-5                       100%      86%      57%      86%               7
+ai/gemini-3-flash                          100%     100%      71%     100%               7
+ai/gpt-5.6-terra                           100%      86%      57%      86%               7
+ai/gpt-6-sol                               100%      75%      58%      75%              12
+edited/TOEFL_gpt4polished_91                87%     100%     100%     100%      21%     91
+humanized/claude-sonnet-5-5                 50%      62%      38%      81%              16
+humanized/gpt-6-sol                         50%      31%      44%      62%              16
+
+By task (raw AI rows, catch rate at the 50% line):
+  blog           n= 5  tropa 100%  desklib 100%  tmr  20%
+  casual-human   n= 7  tropa 100%  desklib  71%  tmr   0%
+  college-essay  n= 7  tropa 100%  desklib  86%  tmr  43%
+  cover-letter   n= 7  tropa 100%  desklib 100%  tmr 100%
+  email          n= 6  tropa 100%  desklib  83%  tmr 100%
+  essay          n= 7  tropa 100%  desklib 100%  tmr 100%
+  explainer      n= 4  tropa 100%  desklib 100%  tmr  50%
+  linkedin       n= 3  tropa 100%  desklib 100%  tmr  67%
+  news           n= 6  tropa 100%  desklib 100%  tmr  67%
+  reddit         n= 4  tropa 100%  desklib  50%  tmr  75%
+  review         n= 5  tropa 100%  desklib 100%  tmr  80%
+  story          n= 5  tropa  80%  desklib  40%  tmr   0%

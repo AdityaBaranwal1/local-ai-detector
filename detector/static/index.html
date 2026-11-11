@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Detector</title>
+<style>
+:root{
+  --bg:#f6f5f2; --panel:#ffffff; --ink:#1d1c1a; --muted:#6b6862; --line:#e3e0da;
+  --human:#2f7d4f; --mixed:#b7791f; --ai:#c0392b;
+  --hl-ai:rgba(192,57,43,.20); --hl-mid:rgba(183,121,31,.18); --hl-ok:transparent;
+  --accent:#2d4a8a; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151513; --panel:#1e1e1b; --ink:#ecebe7; --muted:#a19e97; --line:#33322e;
+  --human:#5dbb82; --mixed:#e0a845; --ai:#ef6b5b; --hl-ai:rgba(239,107,91,.28); --hl-mid:rgba(224,168,69,.22); --accent:#8fa9e8;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:20px;margin:0;letter-spacing:-.01em}
+header .sub{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+#input{width:100%;min-height:340px;resize:vertical;border:0;border-radius:10px;padding:14px 16px;background:transparent;color:var(--ink);font:inherit;outline:none}
+.bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+button{font:inherit;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button:disabled{opacity:.55;cursor:default}
+.count{color:var(--muted);font-size:13px;margin-left:auto}
+#result{padding:16px}
+.big{display:flex;align-items:baseline;gap:8px}
+.big .n{font-size:44px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.verdict{font-weight:600;margin:2px 0 12px}
+.meter{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:6px 0 14px}
+.meter>div{height:100%;border-radius:4px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13.5px}
+dt{color:var(--muted)} dd{margin:0;font-variant-numeric:tabular-nums;text-align:right}
+.section{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.section h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+.warn{color:var(--mixed)}
+#marked{padding:14px 16px;white-space:pre-wrap;line-height:1.75;min-height:120px}
+#marked span{border-radius:3px;padding:1px 0;cursor:default}
+#marked span.ai{background:var(--hl-ai)} #marked span.mid{background:var(--hl-mid)}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.tabs{display:flex;gap:4px;padding:8px 8px 0}
+.tabs button{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom:0}
+.tabs button[aria-selected="true"]{background:var(--bg)}
+.hidden{display:none}
+.history{font-size:13px}
+.history div{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--line)}
+.engines{font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>AI Detector</h1>
+    <span class="sub">runs on this box · nothing leaves it · <span id="health">…</span></span>
+  </header>
+  <div class="grid">
+    <section class="panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="edit">Text</button>
+        <button role="tab" aria-selected="false" data-tab="view" id="viewTab" disabled>Highlighted</button>
+      </div>
+      <div id="tab-edit">
+        <textarea id="input" placeholder="Paste text here (English, 50+ words works best) and press Check — Ctrl+Enter also works."></textarea>
+      </div>
+      <div id="tab-view" class="hidden">
+        <div class="legend">
+          <span><span class="sw" style="background:var(--hl-ai)"></span>reads as AI</span>
+          <span><span class="sw" style="background:var(--hl-mid)"></span>borderline</span>
+          <span><span class="sw" style="border:1px solid var(--line)"></span>reads as human</span>
+          <span>hover a sentence for its score</span>
+        </div>
+        <div id="marked"></div>
+      </div>
+      <div class="bar">
+        <button class="primary" id="go">Check</button>
+        <button id="edit" class="hidden">Edit text</button>
+        <button id="clear">Clear</button>
+        <span class="count" id="count">0 words</span>
+      </div>
+    </section>
+    <aside class="panel" id="result">
+      <div class="big"><span class="n" id="score">–</span><span>% AI</span></div>
+      <div class="verdict" id="verdict">Paste some text to check it.</div>
+      <div class="meter"><div id="meterbar" style="width:0"></div></div>
+      <dl id="facts"></dl>
+      <div class="section" id="classesBox" hidden>
+        <h3>What kind of text it looks like</h3>
+        <dl id="classes"></dl>
+      </div>
+      <div class="note" id="note"></div>
+      <div class="section">
+        <h3>This session</h3>
+        <div class="history" id="history"><span class="note">Each check you run shows up here, so you can see a rewrite's effect.</span></div>
+      </div>
+      <details class="section">
+        <summary class="note">Engine details</summary>
+        <div class="engines" id="engines"></div>
+      </details>
+    </aside>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const input = $("#input");
+let last = null, runs = 0;
+const words = t => (t.trim().match(/\S+/g) || []).length;
+input.addEventListener("input", () => $("#count").textContent = words(input.value) + " words");
+input.addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) check(); });
+$("#go").onclick = check;
+$("#clear").onclick = () => { input.value = ""; input.dispatchEvent(new Event("input")); tab("edit"); };
+$("#edit").onclick = () => tab("edit");
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => !b.disabled && tab(b.dataset.tab));
+function tab(t){
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  $("#tab-edit").classList.toggle("hidden", t !== "edit");
+  $("#tab-view").classList.toggle("hidden", t !== "view");
+  $("#edit").classList.toggle("hidden", t !== "view");
+  if (t === "edit") input.focus();
+}
+const colour = v => v >= 0.65 ? "var(--ai)" : v >= 0.35 ? "var(--mixed)" : "var(--human)";
+const esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+async function check(){
+  const text = input.value;
+  if (!text.trim()) return;
+  $("#go").disabled = true; $("#go").textContent = "Checking…";
+  try {
+    const r = await fetch("api/detect", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || r.statusText);
+    show(text, d);
+  } catch (e) {
+    $("#verdict").textContent = "Error: " + e.message;
+  } finally {
+    $("#go").disabled = false; $("#go").textContent = "Check";
+  }
+}
+function show(text, d){
+  last = d;
+  const s = Math.round(d.ai_score * 100);
+  $("#score").textContent = s;
+  $("#score").style.color = colour(d.ai_score);
+  $("#verdict").textContent = d.verdict_text;
+  $("#meterbar").style.width = s + "%";
+  $("#meterbar").style.background = colour(d.ai_score);
+  $("#facts").innerHTML = [
+    ["Text that reads as AI", Math.round(d.ai_share * 100) + "% of words"],
+    ["Sentences flagged", `${d.sentences.filter(x => x.flag === "ai").length} of ${d.sentences.length}`],
+    ["Words", d.words],
+    ["Took", (d.ms / 1000).toFixed(1) + " s on " + d.device.toUpperCase()],
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  if (d.classes){
+    $("#classesBox").hidden = false;
+    const names = {human:"Human-written", ai:"Raw AI output", ai_edited:"Human, AI-polished", humanized:"AI run through a humanizer"};
+    $("#classes").innerHTML = Object.entries(d.classes).map(([k, v]) => `<dt>${names[k] || k}</dt><dd>${Math.round(v * 100)}%</dd>`).join("");
+  }
+  $("#note").innerHTML = (d.notes || []).map(n => `<div class="warn">${esc(n)}</div>`).join("");
+  $("#engines").innerHTML = Object.entries(d.engines).map(([k, v]) => `${k}: ${typeof v === "number" ? v.toFixed(3) : v}`).join("<br>");
+  // highlighted view
+  let html = "", pos = 0;
+  for (const x of d.sentences){
+    html += esc(text.slice(pos, x.start));
+    const cls = x.flag === "ai" ? "ai" : x.flag === "mid" ? "mid" : "";
+    html += `<span class="${cls}" title="${Math.round(x.score * 100)}% AI">${esc(text.slice(x.start, x.end))}</span>`;
+    pos = x.end;
+  }
+  html += esc(text.slice(pos));
+  $("#marked").innerHTML = html;
+  $("#viewTab").disabled = false;
+  tab("view");
+  runs += 1;
+  const h = $("#history");
+  if (runs === 1) h.innerHTML = "";
+  h.insertAdjacentHTML("afterbegin", `<div><span>#${runs} · ${d.words} words · ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</span><b style="color:${colour(d.ai_score)}">${s}%</b></div>`);
+}
+fetch("healthz").then(r => r.json()).then(h => $("#health").textContent = h.ok ? `ready · ${h.engine}` : "starting…").catch(() => $("#health").textContent = "offline");
+</script>
+</body>
+</html>
