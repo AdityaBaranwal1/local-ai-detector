@@ -72,7 +72,7 @@ class Classifier:
         if self.model is None:
             self.tok = AutoTokenizer.from_pretrained(self.repo)
             cls = MeanPoolHead if self.arch == "meanpool" else AutoModelForSequenceClassification
-            self.model = cls.from_pretrained(self.repo).eval()
+            self.model = cls.from_pretrained(self.repo, dtype=torch.float32).eval()   # fp16 checkpoints too
         if device != self.device:
             self.model.to(device)
             self.device = device

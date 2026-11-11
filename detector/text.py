@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import re
 
-_ABBR = {"mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs", "etc", "e.g", "i.e", "inc", "ltd", "co", "no", "fig", "u.s", "a.m", "p.m"}
+_ABBR = {"mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs", "etc", "e.g", "i.e", "inc", "ltd", "co", "no", "fig", "u.s",
+         "a.m", "p.m", "b.s", "b.a", "m.s", "m.a", "b.sc", "m.sc", "ph.d", "m.b.a", "b.e", "m.eng", "u.k", "corp", "dept", "approx", "est"}
 _END = re.compile(r"[.!?…]+[\"')\]”’]*\s+|\n\s*\n|\n(?=\s*(?:[-*•]|\d+[.)])\s)")
 
 

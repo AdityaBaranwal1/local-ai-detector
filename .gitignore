@@ -4,3 +4,10 @@ __pycache__/
 eval/data/
 eval/scores.json
 eval/sites/zerogpt_sample.json
+data/
+# training/test corpora + model checkpoints (rebuilt by train/build_data.py, train/gen_train.py, train/train.py)
+train/raw/
+train/data/
+test/
+eval/runs/
+models/

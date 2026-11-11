@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""ai-check: verify text with the homelab AI detector before it goes out under the owner's name.
+
+  ai-check draft.txt            check a file          echo "text" | ai-check      check stdin
+  ai-check --max-ai 0.2 f.txt   stricter line         ai-check --json f.txt       the full verdict JSON
+
+Exit 0 = PASS, 1 = FAIL (rewrite the listed sentences / tells, then check again), 2 = could not check
+(treat as FAIL). Talks to http://127.0.0.1:8323 (AI_DETECTOR_URL to override, e.g. the tailnet
+https://<host>.<tailnet>.ts.net:8450 from another machine). Usage of the API: GET /verify.
+"""
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+URL = os.environ.get("AI_DETECTOR_URL", "http://127.0.0.1:8323").rstrip("/")
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("file", nargs="?", default="-")
+    ap.add_argument("--max-ai", type=float, default=None, help="PASS line for the AI score (default 0.30)")
+    ap.add_argument("--json", action="store_true", help="print the verdict JSON")
+    ap.add_argument("--fresh", action="store_true", help="re-check even if a verdict is stored")
+    a = ap.parse_args()
+    text = sys.stdin.read() if a.file == "-" else open(a.file, encoding="utf-8").read()
+    if not text.strip():
+        print("ai-check: empty text", file=sys.stderr)
+        return 2
+    body = {"text": text, "fresh": a.fresh}
+    if a.max_ai is not None:
+        body["max_ai"] = a.max_ai
+    req = urllib.request.Request(URL + "/verify", json.dumps(body).encode(), {"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            v = json.load(r)
+    except urllib.error.HTTPError as e:
+        print(f"ai-check: could not check: HTTP {e.code} {e.read().decode(errors='replace')[:200]}", file=sys.stderr)
+        return 2
+    except (OSError, ValueError) as e:
+        print(f"ai-check: could not check: {e} (is ai-detector.service up?)", file=sys.stderr)
+        return 2
+    if a.json:
+        print(json.dumps(v, indent=1))
+    else:
+        print(v.get("summary", v.get("verdict")))
+        for p in v.get("problems", []):
+            if "quote" in p:
+                q = p["quote"].replace("\n", " ")
+                q = q if len(q) <= 110 else q[:107] + "..."
+                tag = p["check"] if p["check"] == "model" else f"tell:{p['rule']}" + (" (strong)" if p.get("severity") == "strong" else "")
+                print(f"  - [{tag}] \"{q}\" -> {p['msg']}")
+        for n in v.get("notes", []):
+            print(f"  note: {n}")
+    if v.get("verdict") == "PASS":
+        return 0
+    return 1 if v.get("complete", True) else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
