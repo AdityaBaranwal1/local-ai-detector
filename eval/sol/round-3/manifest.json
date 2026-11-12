@@ -1,0 +1,60 @@
+{
+  "round": 3,
+  "phase": "A",
+  "frozen_at": "2026-11-12T08:25:23.560612+00:00",
+  "texts_file": "texts.json",
+  "texts_file_sha256": "20efbed370ffba61f7434286652e8ba5ffdf4e72f52af12767235e349c27abfd",
+  "sample_count": 160,
+  "counts": {
+    "human_native": 40,
+    "human_non_native": 40,
+    "ai_raw": 25,
+    "ai_casual_or_humanized": 40,
+    "ai_polished_human": 15
+  },
+  "word_range": [
+    32,
+    396
+  ],
+  "priority_count": 92,
+  "priority_genres": {
+    "application_answer": 22,
+    "thank_you_note": 21,
+    "networking_referral_ask": 12,
+    "follow_up": 14,
+    "linkedin_outreach": 7,
+    "recruiter_reply": 8,
+    "linkedin_post": 8
+  },
+  "short_30_60_count": 48,
+  "short_counts": {
+    "human_non_native": 12,
+    "human_native": 10,
+    "ai_raw": 7,
+    "ai_casual_or_humanized": 14,
+    "ai_polished_human": 5
+  },
+  "earlier_rounds": [
+    {
+      "round": 1,
+      "texts_file_sha256": "fa465126e7b4e635f0cda33440424e24e93ecd74ae41cbc096aaa7229ca58221"
+    },
+    {
+      "round": 2,
+      "texts_file_sha256": "45f4711b900d4f2ddf4ee473aa5459edf10642be7aa4469b4e595d46e00ab247"
+    }
+  ],
+  "deduplication": "All 160 distinct by exact SHA-256 and lowercased alphanumeric/whitespace normalization; no exact/normalized overlap with 240 texts in rounds 1–2.",
+  "thresholds": {
+    "zerogpt_percent": 50,
+    "ours_phase_B": 0.5
+  },
+  "local_service_called": false,
+  "selection_note": "All selections, exclusions, annotations and generations predate the first detector call. Frozen texts.json must never be changed. No private owner text included.",
+  "limitations": [
+    "Native/proficient proxy does not establish individual forum authors’ L1.",
+    "Human priority examples are classroom application answers and thanks plus historical actual correspondence; none is verified modern LinkedIn/recruiter correspondence.",
+    "Human non-native examples share one collection, although authors and recorded L1s vary.",
+    "Different requested generator IDs do not establish model-family independence or training absence."
+  ]
+}

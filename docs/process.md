@@ -150,3 +150,24 @@ Caveat: the held-back casual texts come from the same sources and generators as 
 are optimistic; the independent round-3 set (different models, different human sources, a third of it the owner's
 genres) is the real test. The verify tests' "short human email" fixture turned out to be AI-written (it now reads
 35 %); the test now uses 10 real pre-ChatGPT human texts instead (≥ 9 must pass).
+
+## Round 3 of the independent review
+
+Two-phase this time: GPT-6.1 Sol built and froze 160 fresh texts and collected ZeroGPT's answers while v7 trained,
+then ran our service once v6 + v7 was deployed. 92 of the 160 are the owner's genres; 48 are 30–60 words. Its AI
+texts come from models none of our training data used (GPT-6.1 Terra, Gemini 3.1 Flash-Lite, Claude Sonnet 4.6 and
+Sol itself). [Full report](../eval/sol/round-3/REPORT.md).
+
+| | ours | ZeroGPT |
+|---|---|---|
+| fixed score, fresh round-3 set | **9.0** | 9.8 |
+| round-2 set again (no longer unseen) | 9.7 (was 9.4) | 9.8 |
+| human texts flagged | 3/80 | 0/80 |
+| raw AI caught | 21/25 | 25/25 |
+| casual / humanized AI caught | 35/40 | 38/40 |
+| owner's genres, AI caught | 50/57 | 55/57 |
+| 30–60-word humans flagged | 2/22 | 0/22 |
+
+What it says: casual-message detection improved (round 2's missed networking message is now caught at 79 %), but
+the fresh set exposes two costs of the v6 + v7 engine — raw AI from unseen models (GPT-6.1 Sol's own writing: 11 of 17
+caught) and a few short human messages (thank-you notes) flagged. Not yet ≥ ZeroGPT; not frontier.

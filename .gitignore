@@ -40,3 +40,9 @@ eval/sol/*/zerogpt.json
 eval/sol/*/proxy_ai.json
 eval/sol/*/*candidates*.json
 eval/sol/*/PHASE_A.md
+# Sol round folders: only REPORT.md, ANALYSIS_PLAN.md, manifest.json and scripts are published
+eval/sol/*/round*-results.json
+eval/sol/*/*summary*.json
+eval/sol/*/*.html
+eval/sol/*/phase_*.md
+eval/sol/*/*audit*.json

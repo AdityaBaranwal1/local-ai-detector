@@ -11,7 +11,7 @@ Built in the open, measured honestly against ZeroGPT, and judged by an independe
 ![privacy](https://img.shields.io/badge/texts-never%20leave%20the%20box-1baf7a)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 ![vs ZeroGPT](https://img.shields.io/badge/vs%20ZeroGPT-281%20%2F%20291%20vs%20280-1baf7a)
-![review](https://img.shields.io/badge/independent%20review-9.4%20vs%20ZeroGPT%209.8-eda100)
+![review](https://img.shields.io/badge/independent%20review%20(round%203)-9.0%20vs%20ZeroGPT%209.8-eda100)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/headtohead-dark.png">
@@ -47,7 +47,7 @@ that builds its own fresh test set each round.
 | combiner v0 + mb5² | 278 vs 280 | 1.6 % | 2.9 % | 88 % | live until 2026-11-11 23:40 |
 | combiner v0 + v6² | 281 vs 280 | 1.2 % | 2.4 % | 88 % | review round 2: 9.4/10 vs ZeroGPT 9.8 |
 | **v7** ModernBERT-large + matched casual job-search messages | 274 vs 280 | 8.8 % | 16 % blog/other ✗ | 92 % | alone: too eager on formal text |
-| **combiner v6 + v7² — live** | **281 vs 280** ✓ | **1.9 %** ✓ | **3.8 %** ✓ | **88 %** ✓ | held-back casual messages: 86 % AI caught (v0 + v6: 62 %), 0 % humans flagged · review round 3 running |
+| **combiner v6 + v7² — live** | **281 vs 280** ✓ | **1.9 %** ✓ | **3.8 %** ✓ | **88 %** ✓ | held-back casual messages: 86 % AI caught (v0 + v6: 62 %), 0 % humans flagged · review round 3: **9.0/10 vs ZeroGPT 9.8** |
 
 ¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
 ² a logistic-regression combiner over the two models' class probabilities, **cross-fitted**: each half of the texts
@@ -133,7 +133,7 @@ words on the GPU (fp32, both models resident, ~3.3 GB VRAM).</sub>
   length; catch rate by model family, style and length; the headline is the *worst* group. → `eval/bias.py`
 - **Head-to-head with ZeroGPT** on the same texts.
 - **Independent review**: GPT-6.1 Sol builds a fresh, deliberately hard set each round, runs both detectors and
-  scores ours (round 1: [REPORT.md](eval/sol/round-1/REPORT.md), round 2: [REPORT.md](eval/sol/round-2/REPORT.md)). The builder never trains on its texts.
+  scores ours (round 1: [REPORT.md](eval/sol/round-1/REPORT.md), round 2: [REPORT.md](eval/sol/round-2/REPORT.md), round 3: [REPORT.md](eval/sol/round-3/REPORT.md)). The builder never trains on its texts.
 
 ## Training
 
