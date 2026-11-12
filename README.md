@@ -11,7 +11,7 @@ Built in the open, measured honestly against ZeroGPT, and judged by an independe
 ![privacy](https://img.shields.io/badge/texts-never%20leave%20the%20box-1baf7a)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 ![vs ZeroGPT](https://img.shields.io/badge/vs%20ZeroGPT-281%20%2F%20291%20vs%20280-1baf7a)
-![status](https://img.shields.io/badge/status-independent%20review%20round%202-eda100)
+![review](https://img.shields.io/badge/independent%20review-9.4%20vs%20ZeroGPT%209.8-eda100)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/headtohead-dark.png">
@@ -45,7 +45,7 @@ that builds its own fresh test set each round.
 | **mb5** ModernBERT-large | 273 vs 280 | 8.6 % | 14 % 100–250 words | 94 % | |
 | **v6** ModernBERT-large + matched Wikipedia/PubMed pairs | 278 vs 280 | 3.6 % | 6.9 % blog/other | 89 % | |
 | combiner v0 + mb5² | 278 vs 280 | 1.6 % | 2.9 % | 88 % | live until 2026-11-11 23:40 |
-| **combiner v0 + v6² — live** | **281 vs 280** ✓ | **1.2 %** ✓ | **2.4 %** ✓ | **88 %** ✓ | review round 2 running |
+| **combiner v0 + v6² — live** | **281 vs 280** ✓ | **1.2 %** ✓ | **2.4 %** ✓ | **88 %** ✓ | review round 2: **9.4/10 vs ZeroGPT 9.8** · not yet ≥ ZeroGPT |
 
 ¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
 ² a logistic-regression combiner over the two models' class probabilities, **cross-fitted**: each half of the texts
@@ -131,7 +131,7 @@ words on the GPU (fp32, both models resident, ~3.3 GB VRAM).</sub>
   length; catch rate by model family, style and length; the headline is the *worst* group. → `eval/bias.py`
 - **Head-to-head with ZeroGPT** on the same texts.
 - **Independent review**: GPT-6.1 Sol builds a fresh, deliberately hard set each round, runs both detectors and
-  scores ours (round 1: [REPORT.md](eval/sol/round-1/REPORT.md)). The builder never trains on its texts.
+  scores ours (round 1: [REPORT.md](eval/sol/round-1/REPORT.md), round 2: [REPORT.md](eval/sol/round-2/REPORT.md)). The builder never trains on its texts.
 
 ## Training
 

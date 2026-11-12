@@ -30,3 +30,9 @@ eval/sol/*/probe_*.json
 eval/sites/results.json
 .public-guard.local
 .venv-lightning/
+eval/sol/*/round1-results.json
+eval/sol/*/summary.json
+eval/sol/*/interim.html
+eval/sol/*/*.log
+eval/sol/*/models.json
+eval/sol/*/audit.json

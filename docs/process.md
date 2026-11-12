@@ -103,4 +103,24 @@ Also running: open-weights AI text (Qwen, gpt-oss-20b, Nemotron, MiniMax, Gemma,
 combiner catches 98–100 % of Claude/GPT/Gemini text but far less from open-model families. Every model that
 generates training text is listed in its row's source; none of the generated texts are published.
 
-_Next: independent review round 2 (fresh, unseen texts + round 1's set again)._
+## Round 2 of the independent review
+
+GPT-6.1 Sol built a fresh 120-text set (Cambridge Write & Improve learner writing, LOCNESS, 2018 Stack Exchange,
+public-domain prose from non-native and native authors; AI from Claude Haiku, Gemini, GPT-6 and itself, many in hard
+styles) and re-ran round 1's set. [Full report](../eval/sol/round-2/REPORT.md).
+
+| | ours | ZeroGPT |
+|---|---|---|
+| fresh set, fixed score | **9.4** | 9.8 |
+| round-1 set again | 9.7 (was 9.0) | 10.0 |
+| human texts flagged (fresh) | 1/60 | 1/60 |
+| non-native writers flagged | 0/30 | 0/30 |
+| raw AI caught | 20/20 | 20/20 |
+| casual / humanized AI caught | 26/30 | 29/30 |
+
+The bias problem is gone on this set; the gap is **naturally casual AI writing**: 5 of 8 caught vs ZeroGPT's 8 of 8,
+including a generated LinkedIn networking message that scored 27 % and passed the gate. That is exactly the writing
+this detector exists for (outreach, recruiter replies, follow-ups, short application answers), so it is the next target.
+
+_Next: matched casual-professional data (AI-written and real human messages of the same kinds), open-model text, and a
+two-phase review (the reviewer builds its set while the model trains; scoring runs on the training pod)._

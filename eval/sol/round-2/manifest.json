@@ -1,0 +1,16 @@
+{
+  "frozen_at": "2026-11-12T04:43:00.506354+00:00",
+  "texts_file_sha256": "45f4711b900d4f2ddf4ee473aa5459edf10642be7aa4469b4e595d46e00ab247",
+  "counts": {
+    "human_non_native": 30,
+    "human_native": 30,
+    "ai_raw": 20,
+    "ai_casual_or_humanized": 30,
+    "ai_polished_human": 10
+  },
+  "word_range": [
+    74,
+    392
+  ],
+  "note": "Final source-only annotation audit and timestamp before any detector call. No outcome-based selection or text editing. No round-1 texts reused."
+}
