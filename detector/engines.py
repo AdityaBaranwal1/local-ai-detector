@@ -192,28 +192,34 @@ def _logit(p):
 class Stacked(Ensemble):
     """A learned combiner (eval/stack.py): logistic regression over each member's logit(1-P(human)), logit(P(ai)),
     logit(P(humanized)). Fitted on one hash half of the held-out sets, reported on the other. The class
-    probabilities shown are the members' average; p_ai is the combiner's. Same interface as Classifier."""
+    probabilities shown are the members' average; p_ai is the combiner's. Same interface as Classifier.
+    length_aware (eval/stack_casual.py --length): the features also get lw = log(words/100) and lw x each feature, so
+    the combiner weighs the members differently for a 40-word message than for a 400-word essay."""
 
-    def __init__(self, members, coef, intercept):
+    def __init__(self, members, coef, intercept, length_aware=False):
         super().__init__(members)
-        self.coef, self.intercept = list(coef), float(intercept)
-        assert len(self.coef) == 3 * len(members), "stacker / member count mismatch"
+        self.coef, self.intercept, self.length_aware = list(coef), float(intercept), bool(length_aware)
+        k = 3 * len(members)
+        assert len(self.coef) == (2 * k + 1 if self.length_aware else k), "stacker / member count mismatch"
 
     @classmethod
     def from_file(cls, path, load_member):
         spec = json.loads(pathlib.Path(path).read_text())
-        return cls([load_member(m) for m in spec["paths"]], spec["coef"], spec["intercept"])
+        return cls([load_member(m) for m in spec["paths"]], spec["coef"], spec["intercept"], spec.get("length_aware", False))
 
-    def _stack(self, per_member):
+    def _stack(self, per_member, n_words=100):
         x = []
         for p in per_member:
             x += [_logit(1 - p.get("human", 0.0)), _logit(p.get("ai", 0.0)), _logit(p.get("humanized", 0.0) + 1e-6)]
+        if self.length_aware:                     # must match eval/stack_casual.py F()
+            lw = math.log(max(n_words, 10) / 100)
+            x = x + [lw] + [lw * v for v in x]
         z = self.intercept + sum(c * v for c, v in zip(self.coef, x))
-        return 1 / (1 + math.exp(-z))
+        return 1 / (1 + math.exp(-max(min(z, 50), -50)))
 
     def score(self, text):
         parts = [m.score(text)["classes"] for m in self.members]
-        return {"p_ai": self._stack(parts), "classes": self._merge(parts)}
+        return {"p_ai": self._stack(parts, len(text.split())), "classes": self._merge(parts)}
 
     def score_many(self, texts, batch=8):
         per = [[] for _ in texts]
@@ -221,10 +227,10 @@ class Stacked(Ensemble):
             for i in range(0, len(texts), batch):
                 for j, pr in enumerate(m._probs(texts[i:i + batch])):
                     per[i + j].append(pr)
-        return [self._stack(ps) for ps in per]
+        return [self._stack(ps, len(t.split())) for ps, t in zip(per, texts)]
 
     def gpu_copy(self):
-        e = Stacked([m.gpu_copy() for m in self.members], self.coef, self.intercept)
+        e = Stacked([m.gpu_copy() for m in self.members], self.coef, self.intercept, self.length_aware)
         e.device = "cuda"
         return e
 

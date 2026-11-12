@@ -33,6 +33,14 @@ else:
     from eval.stack import feats
     from eval.suite import RUNS, load_sets
     crow = json.load(open("/tmp/casdev/rows.json"))
+    import math
+    LEN = "--length" in sys.argv
+    def F(runs, names, r):
+        x = feats(runs, names, r["k"])
+        if not LEN:
+            return x
+        lw = math.log(max(len(r["text"].split()), 10) / 100)        # 0 at 100 words, -1.6 at 20, +1.6 at 500
+        return x + [lw] + [lw * v for v in x]
     def run(names, save=None):
         runs = {n: json.loads((RUNS / f"{n}.json").read_text()) for n in names}
         for n in names:
@@ -49,13 +57,13 @@ else:
         def fit(rs):
             d = [dom(r) for r in rs]; c = Counter(d)
             w = np.array([(1 / c[x]) * (len(c) - 1) if x != "AI" else len(c) / c["AI"] for x in d])
-            return LogisticRegression(C=0.5, max_iter=3000).fit(np.array([feats(runs, names, r["k"]) for r in rs]),
+            return LogisticRegression(C=0.5, max_iter=3000).fit(np.array([F(runs, names, r) for r in rs]),
                                                                np.array([r["label"] for r in rs]), sample_weight=w)
         P = {}
         for hv in (0, 1):
             clf = fit([r for r in rows if half(r) != hv])
             rs = [r for r in rows if half(r) == hv]
-            P.update(zip([r["k"] for r in rs], clf.predict_proba(np.array([feats(runs, names, r["k"]) for r in rs]))[:, 1]))
+            P.update(zip([r["k"] for r in rs], clf.predict_proba(np.array([F(runs, names, r) for r in rs]))[:, 1]))
         f = lambda r: P[r["k"]] >= .5
         hum = [r for r in test if r["label"] == 0]; ai = [r for r in test if r["label"] == 1]
         by = defaultdict(list)
@@ -68,7 +76,12 @@ else:
         h2h = sum(f(r) == (r["label"] == 1) for r in zz); zg = sum((r["zerogpt"] >= 50) == (r["label"] == 1) for r in zz)
         ch = [f(r) for r in cas if r["label"] == 0]; ca = [f(r) for r in cas if r["label"] == 1]
         cp = [f(r) for r in cas if r["label"] == 1 and "/priority/" in r["src"]]
+        sh = lambda r: len(r["text"].split()) <= 80
+        sh_h = [f(r) for r in test + cas if r["label"] == 0 and sh(r)]; sh_a = [f(r) for r in test + cas if r["label"] == 1 and sh(r)]
+        print(f"   short (<= 80 words): humans flagged {np.mean(sh_h):.1%} (n={len(sh_h)}), AI caught {np.mean(sh_a):.1%} (n={len(sh_a)})")
         cg = [P[r["k"]] >= .3 for r in cas if r["label"] == 0]
+        raw = [f(r) for r in ai if r["g"] == "AI raw"]
+        print(f"   test AI caught {np.mean([f(r) for r in ai]):.1%} (raw {np.mean(raw):.1%}, n={len(raw)})")
         print(f"{'+'.join(names):14} TEST: FPR {np.mean([f(r) for r in hum]):.1%} worst {worst[1]} {worst[0]:.1%} "
               f"humanized {np.mean([f(r) for r in ai if r['g'] == 'AI humanized']):.1%} h2h {h2h}/{len(zz)} vs {zg} | "
               f"CASUAL: human flagged {np.mean(ch):.1%} (gate {np.mean(cg):.1%}) AI caught {np.mean(ca):.1%} priority {np.mean(cp):.1%}")
@@ -78,7 +91,7 @@ else:
                      "mb7": REPO + "/models/rp-modernbert-v7"}
             json.dump({"models": names, "paths": [paths[n] for n in names], "fit_on": "hash half 0 of the held-out test sets + even rows of the v7 casual dev split",
                        "coef": clf.coef_[0].tolist(), "intercept": float(clf.intercept_[0]),
-                       "features": "per model: logit(1-P(human)), logit(P(ai)), logit(P(humanized)+1e-6)"}, open(save, "w"), indent=1)
+                       "features": "per model: logit(1-P(human)), logit(P(ai)), logit(P(humanized)+1e-6)" + ("; then log(words/100) and log(words/100) x each" if LEN else ""), "length_aware": LEN}, open(save, "w"), indent=1)
             print("saved", save)
     for names in (["v0", "mb6"], ["v0", "mb7"], ["mb6", "mb7"], ["v0", "mb6", "mb7"]):
         run(names)

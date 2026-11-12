@@ -47,7 +47,8 @@ that builds its own fresh test set each round.
 | combiner v0 + mb5² | 278 vs 280 | 1.6 % | 2.9 % | 88 % | live until 2026-11-11 23:40 |
 | combiner v0 + v6² | 281 vs 280 | 1.2 % | 2.4 % | 88 % | review round 2: 9.4/10 vs ZeroGPT 9.8 |
 | **v7** ModernBERT-large + matched casual job-search messages | 274 vs 280 | 8.8 % | 16 % blog/other ✗ | 92 % | alone: too eager on formal text |
-| **combiner v6 + v7² — live** | **281 vs 280** ✓ | **1.9 %** ✓ | **3.8 %** ✓ | **88 %** ✓ | held-back casual messages: 86 % AI caught (v0 + v6: 62 %), 0 % humans flagged · review round 3: **9.0/10 vs ZeroGPT 9.8** |
+| combiner v6 + v7² | **281 vs 280** ✓ | **1.9 %** ✓ | **3.8 %** ✓ | **88 %** ✓ | held-back casual messages: 86 % AI caught (v0 + v6: 62 %), 0 % humans flagged · review round 3: **9.0/10 vs ZeroGPT 9.8** |
+| **v6 + v7, length-aware² — live** | 281 vs 280 ✓ | 1.8 % ✓ | 4.1 % ✓ | 88 % ✓ | short messages (≤ 80 words): 85 % of AI caught (was 73 %); on all 400 review texts 9.4 vs ZeroGPT 9.9 |
 
 ¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
 ² a logistic-regression combiner over the two models' class probabilities, **cross-fitted**: each half of the texts

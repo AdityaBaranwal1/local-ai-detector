@@ -34,12 +34,15 @@ from build_more import h  # noqa: E402
 from gen_train import chat  # noqa: E402
 
 IN_H = ROOT / "train/raw/casual_human.jsonl"
+TAG = os.environ.get("CASUAL_TAG", "")             # a second pass with other generators: its own keys, own situations
 OUT_A = ROOT / "train/raw/casual_ai.jsonl"
-rng = random.Random(53)
+rng = random.Random(TAG or 53)                     # str seeds are deterministic (hash() is not)
 MODELS = {"claude-haiku-5-5": 4, "gemini-3-flash": 4, "gpt-6-luna": 3, "gpt-oss-120b-medium": 3, "gpt-5.6-luna": 2,
           "claude-sonnet-5-5": 2, "gpt-6-sol": 2, "gemini-3.8-flash-high": 2}
+if os.environ.get("CASUAL_MODELS"):                # e.g. v8: the generator families round 3 caught us without
+    MODELS = {m: 1 for m in os.environ["CASUAL_MODELS"].split(",")}
 assert not any("fable" in m or "opus" in m for m in MODELS)
-N_MATCHED, N_PRIORITY, P_HUMANIZE = 2400, 800, 0.2
+N_MATCHED, N_PRIORITY, P_HUMANIZE = int(os.environ.get("CASUAL_N_MATCHED", 2400)), int(os.environ.get("CASUAL_N_PRIORITY", 800)), 0.2
 _lock = threading.Lock()
 
 KIND = {  # human genre -> how to describe it to the model
@@ -48,6 +51,12 @@ KIND = {  # human genre -> how to describe it to the model
     "customer-support-reply": "reply from a company's customer-support account on Twitter",
     "work-email": "short work email to a colleague",
     "work-chat": "message in a tech-support chat channel",
+    # Reddit career subreddits (train/build_reddit_career.py)
+    "job-search-story": "post or comment in a job-search subreddit, about the writer's own job search or work situation",
+    "cover-letter": "post or comment in a job-search subreddit about cover letters",
+    "outreach-or-followup": "post or comment in a job-search subreddit about reaching out to or following up with an employer",
+    "recruiter": "post or comment in a job-search subreddit about dealing with a recruiter",
+    "interview-answer": "post or comment in a job-search subreddit about interview questions",
 }
 PRIORITY = [
     "a LinkedIn message to a former colleague asking whether they know anyone on the {team} team at their company, since there's a {role} opening",
@@ -102,7 +111,7 @@ def jobs():
             n = len(r["text"].split())
             seed = " ".join(r["text"].split()[:15])
             sname, s = rng.choice(STYLES)
-            out.append({"key": f"m{i}", "genre": g, "style": sname, "model": model(), "lo": max(20, int(n * .6)), "hi": int(n * 1.6) + 15,
+            out.append({"key": f"{TAG}m{i}", "genre": g, "style": sname, "model": model(), "lo": max(20, int(n * .6)), "hi": int(n * 1.6) + 15,
                         "prompt": f"Here is how a {KIND[g]} once started: \"{seed} ...\"\n\nWrite your own complete {KIND[g]} "
                                   f"for the same kind of situation, from scratch and in your own words (don't continue or copy it), "
                                   f"about {n} words.{s}{TAIL}"})
@@ -110,7 +119,7 @@ def jobs():
         g = re.sub(r"\{(\w+)\}", lambda m: rng.choice(FILL[m.group(1)]), rng.choice(PRIORITY))
         sname, s = rng.choice(STYLES[:3] * 2 + STYLES[3:])          # natural/plain weighted up: the style that slipped
         w = rng.choice([40, 60, 80, 110, 150])
-        out.append({"key": f"p{i}", "genre": "priority", "style": sname, "model": model(), "lo": 20, "hi": 230,
+        out.append({"key": f"{TAG}p{i}", "genre": "priority", "style": sname, "model": model(), "lo": 20, "hi": 230,
                     "prompt": f"Write {g} (about {w} words).{s}{TAIL}"})
     return out
 

@@ -171,3 +171,28 @@ Sol itself). [Full report](../eval/sol/round-3/REPORT.md).
 What it says: casual-message detection improved (round 2's missed networking message is now caught at 79 %), but
 the fresh set exposes two costs of the v6 + v7 engine — raw AI from unseen models (GPT-6.1 Sol's own writing: 11 of 17
 caught) and a few short human messages (thank-you notes) flagged. Not yet ≥ ZeroGPT; not frontier.
+
+## Round 7 — a length-aware combiner, and a regression benchmark
+
+The combiner now also sees the text's length (log words, and length × each member feature), so it can weigh the two
+models differently for a 40-word message than for a 400-word essay. Cross-fitted on the test sets + held-back casual
+texts: short messages (≤ 80 words) 73 % → **85 %** of AI caught, short humans flagged 0.8 % → 1.6 %, every bar item
+still met. No new training.
+
+`eval/bench_sol.py` re-scores all 400 texts of the three finished review rounds (no longer unseen, so this is a
+regression benchmark) and reproduces the reviewer's numbers exactly:
+
+| engine | round 1 | round 2 | round 3 | all 400 | short AI caught (r3) | short humans flagged (r3) |
+|---|---|---|---|---|---|---|
+| v0 + v6 (round 2's) | 9.7 | 9.4 | **8.2** | 9.0 | 6/21 | 2/22 |
+| v6 + v7 (round 3's) | 9.7 | 9.7 | 9.0 | 9.4 | 16/21 | 2/22 |
+| **v6 + v7 length-aware (live)** | 9.6 | 9.7 | 9.1 | 9.4 | **17/21** | **1/22** |
+| ZeroGPT | 10.0 | 9.8 | 9.8 | 9.9 | 19/21 | 0/22 |
+
+So the round 2 → 3 drop (9.4 → 9.0) was the harder set, not a worse model: on round 3's texts the round-2 engine
+scores 8.2. The length-aware combiner trades two long human texts flagged (8/200 vs 6/200) for better short-message
+detection — the owner's use case. Scoring all 400 texts with three models takes 92 s on the 1660 Ti; a Runpod pod
+would be ~15–20 min, nearly all of it uploading the models over a 36 Mbps uplink.
+
+_Paused here (2026-11-12): good enough for personal use. Next, if resumed: v8 (v7 data + 12 more generator models,
+already generated), a Qwen3-0.6B member, a generator-held-out internal benchmark, then review round 4._
