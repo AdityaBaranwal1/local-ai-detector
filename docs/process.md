@@ -229,3 +229,37 @@ Before spending another review round, the live engine was run on three published
 DetectRL: 82 % vs ZeroGPT 96 % on the shared sample — the misses are 2023 Claude-instant and PaLM text and the
 back-translation attack, while AUROC stays ≥ 0.99. That is exactly what a benchmark should do: find where it breaks.
 Fix in progress (v9): the benchmarks' training splits for those families + locally back-translated text.
+
+## Round 10 — v9: closing the public-benchmark gaps (trained, not deployed)
+
+Data added on top of v8 (all public or made locally; no subscription tokens):
+
+| source | texts | aimed at |
+|---|---|---|
+| benchmark *training* splits (`train/build_public_train.py`): DetectRL (ChatGPT, Claude-instant, PaLM, Llama-2 on arXiv / XSum / stories / Yelp, plus back-translation, DIPPER, polish, typo and evasion-prompt attacks — and the same attacks on human text), Ghostbuster (non-test files), OUTFOX train | 20,296 | 2023 Claude-instant / PaLM text, back-translation |
+| local back-translation of modern AI *and* human messages through German / French with open MarianMT models (`train/build_backtrans.py`) | 2,399 | the humanizer trick we caught 13–33 % of |
+| short real human messages: Reddit comments 2005–19 (GoEmotions), SAMSum chats, EmpatheticDialogues (`train/build_short_human2.py`) | 4,494 | humans wrongly flagged on short text |
+
+The benchmarks' test texts were excluded by hash (167 dropped). Training: 10,996 steps, 106 min on an A40, $1.04.
+
+**Result: worse on its own.** On our held-out test sets v9 scored 92.8 % on the 291 texts ZeroGPT also judged
+(v8: 96.6 %), caught 79 % of humanized AI (v8: 89 %) and flagged 8.3 % of native-English human texts (v8: 6.0 %).
+Likely causes, most suspected first:
+1. **The old benchmark data swamped the mix.** ~20k 2023 texts became about a quarter of the extra data, so the model
+   spent much of its training on old models and long-form domains instead of modern, casual writing.
+2. **Translationese is in both labels on purpose** (back-translated human = human, back-translated AI = AI). That
+   is right, but it removes an easy cue the model leaned on for disguised AI — consistent with the humanized drop.
+3. **"AI-polished human = AI-edited"** (~800 texts) teaches suspicion of polish — consistent with more native-English
+   human texts flagged.
+4. **Checkpoint selection** ran on a dev set now dominated by benchmark text.
+5. Run-to-run noise (a point or two, not ten).
+
+The full scoring of v9 (held-back casual messages, the 400 review texts, the public benchmarks) and the combiners
+with it were stopped part-way by the owner's call to pause, so whether v9 helps *inside* a combiner is untested.
+**The live engine stays v0 + v8.**
+
+Next, if resumed — v10: the benchmark data cut to ~8k texts so it can't swamp the modern data, no
+"polished human = AI-edited" label, back-translation kept in both labels, one pass over the data instead of two
+(half the time and cost), and a faster GPU when one is available; then the same three yardsticks.
+
+_Paused 2026-11-12 15:30. Runpod spend so far: $4.46 of $10._

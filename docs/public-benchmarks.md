@@ -62,6 +62,7 @@ ZeroGPT was run on a stratified sample of 510 of the same texts (one request per
   language and back: 13–33 % caught, ZeroGPT 67–100 %). Ghostbuster's 2023 Claude stories: 70 %.
 - **A lower cutoff is not the fix:** even at a 10 % cutoff DetectRL catch only reaches 79 % (humans still 0 %).
 
-Next (v9): training text from those families (the benchmarks' *training* splits — test splits stay untouched) and
-back-translated text made locally with an open translation model (human texts too, so "translationese" can't become
-an AI tell).
+Follow-up (v9, 2026-11-12): trained on those families (the benchmarks' *training* splits — test splits untouched)
+plus locally back-translated text, human texts too. On its own v9 came out worse on our held-out sets (see
+[process § Round 10](process.md#round-10--v9-closing-the-public-benchmark-gaps-trained-not-deployed)); the
+benchmark re-run with v9 was stopped when the project paused. The live engine is still v0 + v8 — the numbers above.

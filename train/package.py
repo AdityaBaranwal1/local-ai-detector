@@ -14,7 +14,7 @@ from collections import Counter
 
 from sanitize import sanitize  # train/sanitize.py
 
-SANITIZED = {"open.jsonl", "casual.jsonl", "ext.jsonl", "transcripts.jsonl"}
+SANITIZED = {"open.jsonl", "casual.jsonl", "ext.jsonl", "transcripts.jsonl", "pubtrain.jsonl", "backtrans.jsonl", "shorthuman.jsonl"}
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LABEL = {"human": 0, "ai": 1, "ai_edited": 2, "humanized": 3}
@@ -32,7 +32,7 @@ def main(out):
             rows.append({"text": r["text"], "label": LABEL[r["label"]], "src": f"gen/{r['label']}/{r.get('task')}/{r.get('style')}"})
     extra, dev = [], []
     dropped, opener = Counter(), Counter()
-    for name in ("extra.jsonl", "extra2.jsonl", "short.jsonl", "expo.jsonl", "open.jsonl", "casual.jsonl", "ext.jsonl", "transcripts.jsonl"):   # domain-balanced, lit/academic/wiki, short-form, expository
+    for name in ("extra.jsonl", "extra2.jsonl", "short.jsonl", "expo.jsonl", "open.jsonl", "casual.jsonl", "ext.jsonl", "transcripts.jsonl", "pubtrain.jsonl", "backtrans.jsonl", "shorthuman.jsonl"):   # domain-balanced, lit/academic/wiki, short-form, expository
         f = ROOT / "train/data" / name
         if not f.exists():
             continue

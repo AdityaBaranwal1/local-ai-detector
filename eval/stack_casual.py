@@ -14,7 +14,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "score":
     from detector.engines import Classifier
     M = {"v0": "wasitaigeneratedcom/tropa-mini-ai-text-detector",
          "mb6": REPO + "/models/rp-modernbert-v6",
-         "mb7": REPO + "/models/rp-modernbert-v7", "mb8": REPO + "/models/rp-modernbert-v8"}
+         "mb7": REPO + "/models/rp-modernbert-v7", "mb8": REPO + "/models/rp-modernbert-v8", "mb9": REPO + "/models/rp-modernbert-v9"}
     rows = [json.loads(l) for l in open("/tmp/kgl-data7/dev.jsonl")]
     rows = [r for r in rows if r["src"].startswith("casual/")]
     json.dump(rows, open("/tmp/casdev/rows.json", "w"))
@@ -95,7 +95,7 @@ else:
         if save:
             clf = fit([r for r in rows if half(r) == 0])
             paths = {"v0": "wasitaigeneratedcom/tropa-mini-ai-text-detector", "mb6": REPO + "/models/rp-modernbert-v6",
-                     "mb7": REPO + "/models/rp-modernbert-v7", "mb8": REPO + "/models/rp-modernbert-v8"}
+                     "mb7": REPO + "/models/rp-modernbert-v7", "mb8": REPO + "/models/rp-modernbert-v8", "mb9": REPO + "/models/rp-modernbert-v9"}
             json.dump({"models": names, "paths": [paths[n] for n in names], "fit_on": "hash half 0 of the held-out test sets + even rows of the v7 casual dev split",
                        "coef": clf.coef_[0].tolist(), "intercept": float(clf.intercept_[0]),
                        "features": "per model: logit(1-P(human)), logit(P(ai)), logit(P(humanized)+1e-6)" + ("; then log(words/100) and log(words/100) x each" if LEN else ""), "length_aware": LEN}, open(save, "w"), indent=1)

@@ -51,6 +51,7 @@ that builds its own fresh test set each round.
 | v6 + v7, length-aware² | 281 vs 280 ✓ | 1.8 % ✓ | 4.1 % ✓ | 88 % ✓ | short messages (≤ 80 words): 85 % of AI caught (was 73 %); on all 400 review texts 9.4 vs ZeroGPT 9.9 |
 | **v8** ModernBERT-large + 40+ generator families (public datasets, owner's Claude chats) | 281 vs 280 | 5.0 % | | 89 % | alone already ≥ ZeroGPT on the shared texts |
 | **v0 + v8, length-aware² — live** | **285 vs 280** ✓ | **1.3 %** ✓ | **2.2 %** ✓ | **91 %** ✓ | all 400 review texts: **9.8 vs ZeroGPT 9.9**; round 3's set **9.8 vs 9.8** |
+| v9 ModernBERT-large + benchmark training splits, back-translation, short human messages | 270 vs 280 | | | 79 % | worse alone (old-model data swamped the mix); not deployed — see process § Round 10 |
 
 ¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
 ² a logistic-regression combiner over the two models' class probabilities, **cross-fitted**: each half of the texts

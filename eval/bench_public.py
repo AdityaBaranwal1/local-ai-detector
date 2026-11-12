@@ -35,7 +35,7 @@ RAW = ROOT / "train/raw/public_bench"
 SET = ROOT / "eval/data/public_bench.jsonl"
 RUNS = ROOT / "eval/runs"
 MEMBERS = {"v0": "wasitaigeneratedcom/tropa-mini-ai-text-detector", "mb6": str(ROOT / "models/rp-modernbert-v6"),
-           "mb7": str(ROOT / "models/rp-modernbert-v7"), "mb8": str(ROOT / "models/rp-modernbert-v8")}
+           "mb7": str(ROOT / "models/rp-modernbert-v7"), "mb8": str(ROOT / "models/rp-modernbert-v8"), "mb9": str(ROOT / "models/rp-modernbert-v9")}
 ENGINES = {"v0 alone (tropa-mini as published)": None,
            "v0+v6 (2026-11-11 evening)": ("models/stacker-v0-mb6.json", ["v0", "mb6"]),
            "v6+v7 length-aware (this morning)": ("models/stacker-mb6-mb7-len.json", ["mb6", "mb7"]),
