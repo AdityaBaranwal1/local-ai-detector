@@ -8,6 +8,7 @@ Usage: python3 train/package.py /tmp/kgl-data
 import hashlib
 import json
 import pathlib
+import re
 import sys
 from collections import Counter
 
@@ -30,7 +31,7 @@ def main(out):
                 continue
             rows.append({"text": r["text"], "label": LABEL[r["label"]], "src": f"gen/{r['label']}/{r.get('task')}/{r.get('style')}"})
     extra, dev = [], []
-    dropped = Counter()
+    dropped, opener = Counter(), Counter()
     for name in ("extra.jsonl", "extra2.jsonl", "short.jsonl", "expo.jsonl", "open.jsonl", "casual.jsonl", "ext.jsonl", "transcripts.jsonl"):   # domain-balanced, lit/academic/wiki, short-form, expository
         f = ROOT / "train/data" / name
         if not f.exists():
@@ -44,6 +45,17 @@ def main(out):
                 if t is None:
                     dropped[name] += 1
                     continue
+                if name == "open.jsonl" and re.search(r"[A-Za-z,]\s*$", t):   # free-tier output cut off by max_tokens
+                    cut = max(t.rfind(". "), t.rfind("! "), t.rfind("? "), t.rfind(".\n"))
+                    if cut < 0 or len(t[:cut + 1].split()) < 0.7 * len(t.split()):
+                        dropped[name] += 1
+                        continue
+                    t = t[:cut + 1]
+                k12 = " ".join(t.lower().split()[:12])                   # same prompt -> same opener: keep at most 2
+                if opener[k12] >= 2:
+                    dropped[name] += 1
+                    continue
+                opener[k12] += 1
                 r["text"] = t
             (dev if int(hashlib.md5(r["text"][:500].encode()).hexdigest(), 16) % 10 == 0 else extra).append(r)
     for name, part in (("train", rows), ("extra", extra), ("dev", dev)):

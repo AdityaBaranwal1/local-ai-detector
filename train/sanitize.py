@@ -27,9 +27,12 @@ DROP = re.compile("|".join([
 FORMAT_DROP = re.compile("|".join([
     r"^\s*(def |class |import |from \w+ import |function |const |var |#include|SELECT |sudo |pip install|npm |git )",
     r"=>|\)\s*\{|\};|\w+\.\w+\([^)]*\)|\w+\(\)",                        # code calls / blocks
-    r"[{}]|\|.*\||[│─┌┐└┘├┤┬┴┼═║╔╗╚╝▶►→←⇒]|-->",                        # json, tables, diagrams, arrows
-    r"\\(frac|sum|int|alpha|beta|text|mathbb|cdot)|\$[^$\s][^$]{0,40}[a-z^_\\][^$]*\$",   # latex
-    r"\[[A-Z][A-Za-z .'/-]{1,40}\]",                                    # [Placeholder]
+    r"[{}]|^\s*\|.*\|\s*$|[│─┌┐└┘├┤┬┴┼═║╔╗╚╝▶►→←⇒]|-->",                 # json, markdown tables, diagrams, arrows
+    # latex: a backslash command, or $...$ that starts with a letter/backslash ($p < 0.05$, $\ge$) -- NOT prices
+    # ("$30 to $40" starts with a digit; the first version dropped ~370 good texts that mention two prices)
+    r"\\(frac|sum|int|alpha|beta|text|mathbb|cdot|ge|le|pm|times)\b|\$[A-Za-z\\][^$\n]{0,40}\$",
+    r"\[(Your|YOUR|Insert|INSERT|Company|Name|Recipient|Hiring|Position|Role|Job|Date|Title|Address|Phone|Email|"
+    r"Customer|Course|Current|Then|MM|First|Last|Manager|Team|City|Link)\b[^\]\n]{0,40}\]",   # [Your Name]-style placeholders
     r"\b([Ff]lowchart|[Mm]ermaid|sequenceDiagram)\b",
 ]), re.M)
 _TERMS = None
