@@ -221,3 +221,11 @@ Caveat: those rounds are no longer unseen (round 3's generator choice informed v
 round is the real test. Cost: 72 min on an A40, $0.71 — plus $0.04 for a second pod a hand-written retry loop started
 by mistake after the first finished (it looked for "pod up" in the last 60 log lines, which scoring had pushed out);
 caught and deleted within 4 minutes.
+
+## Round 9 — public benchmarks find the next gaps
+
+Before spending another review round, the live engine was run on three published benchmarks it never trained on
+([public benchmarks](public-benchmarks.md)). OUTFOX: 99 % (every detector-evasion essay caught). Ghostbuster: 92 %.
+DetectRL: 82 % vs ZeroGPT 96 % on the shared sample — the misses are 2023 Claude-instant and PaLM text and the
+back-translation attack, while AUROC stays ≥ 0.99. That is exactly what a benchmark should do: find where it breaks.
+Fix in progress (v9): the benchmarks' training splits for those families + locally back-translated text.

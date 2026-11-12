@@ -135,6 +135,8 @@ words on the GPU (fp32, both models resident, ~3.3 GB VRAM).</sub>
 - **Bias report** for every version: false-positive rate by writer (native / non-native), domain, register and
   length; catch rate by model family, style and length; the headline is the *worst* group. → `eval/bias.py`
 - **Head-to-head with ZeroGPT** on the same texts.
+- **Public benchmarks** we never trained on (Ghostbuster, DetectRL, OUTFOX): OUTFOX 99 %, Ghostbuster 92 %,
+  DetectRL 82 % (older Claude-instant / PaLM text and back-translation are the gaps) → [public benchmarks](docs/public-benchmarks.md).
 - **Independent review**: GPT-6.1 Sol builds a fresh, deliberately hard set each round, runs both detectors and
   scores ours (round 1: [REPORT.md](eval/sol/round-1/REPORT.md), round 2: [REPORT.md](eval/sol/round-2/REPORT.md), round 3: [REPORT.md](eval/sol/round-3/REPORT.md)). The builder never trains on its texts.
 
