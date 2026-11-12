@@ -49,7 +49,7 @@ that builds its own fresh test set each round.
 | **v7** ModernBERT-large + matched casual job-search messages | 274 vs 280 | 8.8 % | 16 % blog/other ✗ | 92 % | alone: too eager on formal text |
 | combiner v6 + v7² | **281 vs 280** ✓ | **1.9 %** ✓ | **3.8 %** ✓ | **88 %** ✓ | held-back casual messages: 86 % AI caught (v0 + v6: 62 %), 0 % humans flagged · review round 3: **9.0/10 vs ZeroGPT 9.8** |
 | v6 + v7, length-aware² | 281 vs 280 ✓ | 1.8 % ✓ | 4.1 % ✓ | 88 % ✓ | short messages (≤ 80 words): 85 % of AI caught (was 73 %); on all 400 review texts 9.4 vs ZeroGPT 9.9 |
-| **v8** ModernBERT-large + 40+ generator families (public datasets, owner's Claude chats) | 281 vs 280 | 4.8 % | | 89 % | alone already ≥ ZeroGPT on the shared texts |
+| **v8** ModernBERT-large + 40+ generator families (public datasets, owner's Claude chats) | 281 vs 280 | 5.0 % | | 89 % | alone already ≥ ZeroGPT on the shared texts |
 | **v0 + v8, length-aware² — live** | **285 vs 280** ✓ | **1.3 %** ✓ | **2.2 %** ✓ | **91 %** ✓ | all 400 review texts: **9.8 vs ZeroGPT 9.9**; round 3's set **9.8 vs 9.8** |
 
 ¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
