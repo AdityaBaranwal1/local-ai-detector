@@ -26,7 +26,7 @@ def main(out):
                 continue
             rows.append({"text": r["text"], "label": LABEL[r["label"]], "src": f"gen/{r['label']}/{r.get('task')}/{r.get('style')}"})
     extra, dev = [], []
-    for name in ("extra.jsonl", "extra2.jsonl", "short.jsonl", "expo.jsonl", "open.jsonl", "casual.jsonl"):   # domain-balanced, lit/academic/wiki, short-form, expository
+    for name in ("extra.jsonl", "extra2.jsonl", "short.jsonl", "expo.jsonl", "open.jsonl", "casual.jsonl", "ext.jsonl"):   # domain-balanced, lit/academic/wiki, short-form, expository
         f = ROOT / "train/data" / name
         if not f.exists():
             continue
