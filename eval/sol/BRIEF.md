@@ -61,3 +61,21 @@ Round 2 onward: build a **fresh** set (don't reuse earlier rounds' texts, the bu
 re-run the previous round's set too for comparison.
 
 Be strict and specific. Don't edit the detector's code or its service.
+
+## Two-phase rounds (round 3 onward)
+
+To get the verdict soon after a model finishes training, each round runs in two phases:
+
+- **Phase A (while the builder's model trains):** build the fresh set, freeze it (timestamp + SHA-256), and collect
+  ZeroGPT's answers (and any other external detector's) for every text. Do **not** call our service in phase A. Write
+  `texts.json`, `zerogpt.json`, `manifest.json`, then stop and report that phase A is done. The builder never reads
+  these files and trains nothing on them (training data is packaged before phase A starts).
+- **Phase B (after the new model is deployed):** run our service (`/api/detect` + `/verify`) on the frozen set, then
+  analyze and write `REPORT.md` as before. Re-running earlier rounds' sets against ZeroGPT is not needed: their saved
+  ZeroGPT answers are reused.
+
+**Owner's priority (from round 2):** the detector exists for casual-professional job-search writing — LinkedIn outreach
+and posts, recruiter replies, networking/referral asks, follow-ups, thank-you notes, short application answers. Make
+at least a third of the set those genres (human and AI), include short texts of 30–60 words as their own slice, and
+report that slice separately. Natural, restrained, specific AI messages (the style that slipped through in round 2)
+deserve a good share.
