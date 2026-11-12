@@ -24,7 +24,7 @@ KEY = re.search(r'api-keys:\s*\n\s*-\s*"([^"]+)"', CFG.read_text()).group(1)
 # weights favour the cheap models so the Claude subscription stays free for the daily job run
 MODELS = {"claude-haiku-5-5": 5, "gemini-3-flash": 5, "gemini-3.5-flash-lite": 4, "gpt-5.6-luna": 4, "gpt-6-luna": 4,
           "gpt-oss-120b-medium": 4, "claude-sonnet-5-5": 2, "gpt-6-sol": 2, "gpt-5.6-terra": 2, "claude-opus-5-5": 1,
-          "claude-fable-5-2": 1, "claude-sonnet-4-6": 1, "gemini-3.8-flash-high": 2}
+          "claude-sonnet-4-6": 1, "gemini-3.8-flash-high": 2}
 
 ROLES = ["junior data analyst", "software engineer intern", "marketing coordinator", "nurse", "warehouse supervisor",
          "high school teacher", "UX designer", "financial analyst", "customer support lead", "research assistant",

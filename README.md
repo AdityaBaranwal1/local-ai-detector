@@ -7,10 +7,11 @@
 Built in the open, measured honestly against ZeroGPT, and judged by an independent GPT-6.1 reviewer.
 
 ![runs on](https://img.shields.io/badge/runs%20on-GTX%201660%20Ti%20(6%20GB)-2a78d6)
-![model](https://img.shields.io/badge/model-DeBERTa--v3--large%20435M-6250d6)
+![model](https://img.shields.io/badge/engine-DeBERTa--v3%20%2B%20ModernBERT%20combiner-6250d6)
 ![privacy](https://img.shields.io/badge/texts-never%20leave%20the%20box-1baf7a)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
-![status](https://img.shields.io/badge/status-training%20toward%20frontier-eda100)
+![vs ZeroGPT](https://img.shields.io/badge/vs%20ZeroGPT-281%20%2F%20291%20vs%20280-1baf7a)
+![status](https://img.shields.io/badge/status-independent%20review%20round%202-eda100)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/headtohead-dark.png">
@@ -36,14 +37,21 @@ unfairly flagged** (non-native writers, academic, encyclopedic, casual) and a hi
 humanized text — that still runs on a GTX 1660 Ti. The bar is checked by an independent reviewer (GPT-6.1 Sol)
 that builds its own fresh test set each round.
 
-| Model | Held-out accuracy vs ZeroGPT¹ | Worst human group flagged | Humanized AI caught | Independent review |
-|---|---|---|---|---|
-| **v0** tropa-mini, as published | 89.7 % vs 96.2 % | 20 % (forum posts) | 48 % | 9.0/10 · not ≥ ZeroGPT |
-| **k3** full fine-tune, narrow data | 92.1 % vs 96.2 % | **48 % (academic)** ✗ | 97 % | not deployed (bias) |
-| **v4** + domain-balanced data | _training_ | | | |
-| **ModernBERT-large** (ensemble partner) | _training_ | | | |
+| Version | Accuracy vs ZeroGPT¹ | Human texts flagged | Worst human group | Humanized AI caught | |
+|---|---|---|---|---|---|
+| **v0** tropa-mini, as published | 261 vs 280 | 6.7 % | 20 % forum posts | 48 % | review round 1: 9.0/10 |
+| **k3** first fine-tune, narrow data | 268 vs 280 | 17 % | **48 % academic** ✗ | 97 % | not deployed: *formal = AI* |
+| **v4** DeBERTa, domain-balanced | 276 vs 280 | 12 % | 29 % academic ✗ | 95 % | |
+| **mb5** ModernBERT-large | 273 vs 280 | 8.6 % | 14 % 100–250 words | 94 % | |
+| **v6** ModernBERT-large + matched Wikipedia/PubMed pairs | 278 vs 280 | 3.6 % | 6.9 % blog/other | 89 % | |
+| combiner v0 + mb5² | 278 vs 280 | 1.6 % | 2.9 % | 88 % | live until 2026-11-11 23:40 |
+| **combiner v0 + v6² — live** | **281 vs 280** ✓ | **1.2 %** ✓ | **2.4 %** ✓ | **88 %** ✓ | review round 2 running |
 
-¹ the 291 held-out texts ZeroGPT has also judged; everything else in [evaluation](docs/evaluation-v0.md).
+¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
+² a logistic-regression combiner over the two models' class probabilities, **cross-fitted**: each half of the texts
+is scored by a combiner fitted on the other half, so no number above was fitted on the texts it reports.
+The bar for calling the independent reviewer: ≥ ZeroGPT, ≤ 3 % humans flagged, no group above 5 %, ≥ 85 % humanized caught.
+281 vs 280 is parity, not a clear win: one text. Details: [evaluation](docs/evaluation.md).
 
 ## What it looks like
 
@@ -57,7 +65,7 @@ see the score without it. Agents get the same information as JSON from <code>POS
 ```mermaid
 flowchart LR
     T[text] --> S1[split<br/>sentences + spans]
-    S1 --> M[model<br/>DeBERTa-v3-large<br/>4 classes]
+    S1 --> M[models<br/>DeBERTa-v3 + ModernBERT<br/>→ learned combiner]
     M --> D[drivers<br/>which sentences<br/>push the score]
     T --> TL[tells<br/>stock phrases,<br/>placeholders, markdown]
     D --> V{verdict}
@@ -96,9 +104,11 @@ Running it as a service next to other GPU jobs, behind Tailscale: [homelab.md](d
   <img alt="Bias check: human texts wrongly flagged as AI, by kind of writing" src="docs/img/bias_domain-light.png" width="100%">
 </picture>
 
-The first fine-tune (k3) learned a shortcut: *formal = AI*. It caught 97 % of humanized AI text — far above
-ZeroGPT's 77 % — but flagged half of real academic writing. The fix in progress is data in which **every domain has
-both human and AI text**, and choosing checkpoints by their **worst** domain, not their average.
+The first fine-tune (k3) learned a shortcut: *formal = AI*. It caught 97 % of humanized AI text, far above
+ZeroGPT's 77 %, but flagged half of real academic writing. What fixed it: data in which **every domain has both human
+and AI text** (down to matched pairs: a real Wikipedia opening next to an AI one on the same topic), choosing
+checkpoints by their **worst** domain rather than their average, and a small learned combiner of two different
+architectures. The live engine flags no group of human writing above 2.4 %, non-native writers included.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/ai_styles-dark.png">
@@ -109,6 +119,9 @@ both human and AI text**, and choosing checkpoints by their **worst** domain, no
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/speed-dark.png">
   <img alt="Seconds per check on a GTX 1660 Ti and on CPU" src="docs/img/speed-light.png" width="80%">
 </picture>
+
+<sub>Measured with the single-model engine (v0). The live two-model combiner: 0.5 s / 1.3 s / 3.4 s for 100 / 250 / 500
+words on the GPU (fp32, both models resident, ~3.3 GB VRAM).</sub>
 
 ## How it's evaluated
 
@@ -123,7 +136,7 @@ both human and AI text**, and choosing checkpoints by their **worst** domain, no
 ## Training
 
 Full fine-tunes on **Kaggle** (free T4) and **Runpod** (pay-per-minute, with a hard price cap, a watchdog that
-deletes the pod, and a cost ledger) — [training](docs/training.md). The served model stays small enough for the
+deletes the pod, and a cost ledger; every Runpod run so far together: under $3) — [training](docs/training.md). The served model stays small enough for the
 6 GB card; better data does the heavy lifting.
 
 ## Limits and responsible use

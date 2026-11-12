@@ -29,7 +29,7 @@ from gen_train import chat  # noqa: E402
 OUT_H = ROOT / "train/raw/expo_human.jsonl"
 OUT_A = ROOT / "train/raw/expo_ai.jsonl"
 rng = random.Random(31)
-MODELS = {"claude-haiku-5-5": 3, "claude-sonnet-5-5": 3, "claude-opus-5-5": 2, "claude-fable-5-2": 1,
+MODELS = {"claude-haiku-5-5": 3, "claude-sonnet-5-5": 3, "claude-opus-5-5": 2,
           "gpt-6-sol": 3, "gpt-6-luna": 2, "gpt-5.6-luna": 2, "gpt-oss-120b-medium": 2,
           "gemini-3-flash": 3, "gemini-3.8-flash-high": 2}
 N_WIKI, N_MED = 900, 900
@@ -134,7 +134,7 @@ def finish():
     paired = {int(r["key"][1:]) for r in ai_}
     for dom, tag in (("wiki", "wikipedia"), ("med", "pubmed")):
         n_ai = sum(r["src"].split("/")[2] == tag for r in ai_)
-        idx = [i for i, r in enumerate(hum) if r["dom"] == dom]
+        idx = [i for i, r in enumerate(hum) if r and r["dom"] == dom]
         idx.sort(key=lambda i: i not in paired)
         for i in idx[n_ai:]:
             hum[i] = None

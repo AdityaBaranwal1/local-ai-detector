@@ -53,14 +53,54 @@ newly generated texts in email / application-answer genres) on a free Kaggle T4,
 
 The model had learned *formal = AI*, because every formal text in its training data was AI. **Not deployed.**
 
-## Round 3 — domain-balanced data (in progress)
+## Round 3 — domain-balanced data, and a second architecture
 
 - +13,855 texts from MAGE, COLING-2025 MGT and HC3 where **every domain has both human and AI text** (76
   domain×label groups), plus a 1,544-text dev split per domain.
 - Checkpoints chosen by **0.5·(1 − worst-domain false-positive rate) + 0.5·catch rate**, so one bad domain can't
   hide behind a good average.
-- In parallel, a second architecture (ModernBERT-large, 395M) on a rented GPU, as a possible ensemble partner.
+- A second architecture, ModernBERT-large (395M), trained on Runpod (A40 / A6000, $0.59/h cap, scored on the pod).
 - Runpod lessons: community GPUs were sold out all evening; requiring a CUDA ≥ 12.8 host driver hid every card;
   the CUDA 12.4 image needed a clean, pinned venv. Each failed attempt cost ~$0.02 thanks to the guards.
 
-_Next: bias report + ZeroGPT head-to-head on v4 and the ensemble, then review round 2._
+Result: better, still not good enough alone. v4 (DeBERTa) caught 98 % of AI text but still flagged 29 % of academic
+writing; ModernBERT (mb1, mb5) flagged less but missed more. A plain average of two models didn't fix it either.
+
+## Round 4 — a learned combiner, cross-fitted
+
+Each model outputs four class probabilities (human / AI / AI-edited / humanized). A small logistic regression reads
+three log-odds features per model and decides; human texts are weighted per domain so no domain dominates the fit.
+To keep the numbers honest it is **cross-fitted**: split the 4,257 held-out texts in two by hash, fit on one half,
+score the other, then swap. Every reported number is out-of-fold.
+
+- tropa-mini + mb5: humans flagged 1.6 %, worst group 2.9 %, humanized AI 87.7 % (tropa-mini alone: 43 %) —
+  278 vs ZeroGPT's 280 on the shared texts. Deployed (2 models, 1.3 s per 250 words on the 1660 Ti).
+- The misses had one theme: **encyclopedic and clinical AI prose** ("Photosynthesis is the biological process…")
+  from a 2026 benchmark, only 75–88 % caught. The training data had far more human Wikipedia/PubMed than AI text
+  in that style, so the models had learned *encyclopedic = human*.
+- A DeBERTa v5 flagged 21 % of native human text alone and added nothing to the combiner: dropped.
+
+## Round 5 — matched pairs (v6)
+
+`train/build_expo.py`: 900 real Wikipedia openings and 900 real PubMed abstracts (all pre-2019), and for **the same
+topics** an AI-written opening/abstract from nine current models (markdown stripped so formatting is never the
+tell). 3,576 texts, balanced per domain, deduplicated against every test set.
+
+ModernBERT v6 on that data (43 min on an A40, $0.43):
+
+| | alone | combined with tropa-mini (cross-fitted) |
+|---|---|---|
+| vs ZeroGPT on its 291 texts | 278 vs 280 | **281 vs 280** |
+| human texts flagged | 3.6 % | **1.2 %** |
+| worst human group | 6.9 % | **2.4 %** |
+| humanized AI caught | 89 % | 88 % |
+| encyclopedic/clinical AI caught | | **98 %** (was 88 %) |
+
+All four parts of the bar met; deployed 2026-11-11 23:40. 281 vs 280 is parity rather than a clear win (one text),
+which is exactly why the independent review builds its own fresh set.
+
+Also running: open-weights AI text (Qwen, gpt-oss-20b, Nemotron, MiniMax, Gemma, …) from free API tiers, because the
+combiner catches 98–100 % of Claude/GPT/Gemini text but far less from open-model families. Every model that
+generates training text is listed in its row's source; none of the generated texts are published.
+
+_Next: independent review round 2 (fresh, unseen texts + round 1's set again)._

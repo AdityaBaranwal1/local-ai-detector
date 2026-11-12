@@ -16,7 +16,7 @@ CFG = pathlib.Path.home() / "docker/cliproxyapi/config.yaml"
 KEY = re.search(r'api-keys:\s*\n\s*-\s*"([^"]+)"', CFG.read_text()).group(1)
 
 MODELS = [
-    "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-2",
+    "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5",
     "claude-sonnet-4-5-20250929", "gpt-6-sol", "gpt-5.6-terra", "gemini-3-flash",
 ]
 

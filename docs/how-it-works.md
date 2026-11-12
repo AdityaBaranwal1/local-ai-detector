@@ -1,5 +1,13 @@
 # How it works
 
+- **Live engine: a learned combiner of two models.** tropa-mini (below) and our ModernBERT-large fine-tune
+  (`models/rp-modernbert-v6`, trained on Runpod) each score the text; a logistic regression reads three log-odds per
+  model (`1 − P(human)`, `P(ai)`, `P(humanized)`) and gives the AI score. Its coefficients are a small JSON file
+  (`eval/stack.py --save`) that the service loads via `AI_STACKER`. Fitted on one hash half of the held-out texts;
+  the numbers in the README are cross-fitted (`eval/stack_cv.py`). Both models stay in VRAM while the detector holds
+  the GPU (fp32, ~3.3 GB): 1.3 s per 250 words. The sentence highlights below work the same way, on the combined score.
+
+The single-model notes below describe tropa-mini on its own (and the service with `AI_MODEL` instead of `AI_STACKER`).
 
 - **Engine:** [`wasitaigeneratedcom/tropa-mini-ai-text-detector`](https://huggingface.co/wasitaigeneratedcom/tropa-mini-ai-text-detector)
   (DeBERTa-v3-large fine-tuned from desklib, Apache-2.0), 4 classes: human / ai / ai_edited / humanized.

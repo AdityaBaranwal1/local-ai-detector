@@ -25,6 +25,8 @@ flowchart LR
 - `HF_HUB_OFFLINE=1`: the model comes from the local Hugging Face cache; nothing is downloaded or sent at run time.
   Texts are never logged; verify verdicts are stored by SHA-256 only (`data/verdicts.sqlite`, directory mode 0700).
 - `AI_MODEL` (environment) picks the model: a Hugging Face id or a fine-tuned directory under `models/`.
+- `AI_STACKER` (environment, overrides `AI_MODEL`) points at a learned-combiner JSON (`eval/stack.py --save … --paths …`):
+  the member models' paths + coefficients. The live setup uses tropa-mini + ModernBERT v6.
 
 ## Sharing one small GPU
 

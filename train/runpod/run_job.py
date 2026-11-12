@@ -72,7 +72,11 @@ def main():
     ap.add_argument("--max-price", type=float, default=MAX_PRICE, help="hard $/h cap, checked on the created pod")
     ap.add_argument("--base", default="", help="backbone for train_kaggle.py (BASE env); default tropa-mini")
     ap.add_argument("--eval-name", default="", help="also score the test sets on the pod -> eval/runs/<name>.json")
+    ap.add_argument("--attach", default="", help="pod id of a job already training (the runner died): follow it, "
+                                                 "then score / download / delete as usual")
     a = ap.parse_args()
+    if a.attach:
+        return follow_existing(a)
     if not SSH_KEY.exists():
         subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "runpod-ai-detector", "-f", str(SSH_KEY)], check=True)
     pub = SSH_KEY.with_suffix(".pub").read_text().strip()
@@ -136,45 +140,76 @@ def main():
         run = (f"cd /root/job && {base}DATA_DIR=/root/job/data OUT_DIR=/root/job/model EPOCHS={a.epochs} "
                f"nohup /root/venv/bin/python train_kaggle.py > train.log 2>&1 & echo started")
         subprocess.run(["ssh", *S, f"root@{ip}", run], check=True)
-        last = 0
-        while True:                                                   # follow the log until done or dead
-            time.sleep(30)
-            r = subprocess.run(["ssh", *S, f"root@{ip}", f"tail -n +{last + 1} /root/job/train.log"], capture_output=True, text=True)
-            if r.returncode != 0:
-                continue
-            new = r.stdout.splitlines()
-            last += len(new)
-            for l in new:
-                if any(k in l for k in ("step ", "val @", "saved", "done;", "Traceback", "Error", "autocast", "extra", "train ")):
-                    print(l, flush=True)
-            tail = subprocess.run(["ssh", *S, f"root@{ip}", "tail -n 60 /root/job/train.log; pgrep -f train_kaggle.py >/dev/null && echo __ALIVE__"],
-                                  capture_output=True, text=True).stdout
-            if "done;" in tail:
-                break
-            if "__ALIVE__" not in tail:
-                print("trainer exited without 'done'", flush=True)
-                break
-        if a.eval_name:                                              # score the test sets here (GPU) instead of on the laptop
-            bundle = "/tmp/eval_bundle.tgz"
-            files = ["detector", "eval/__init__.py", "eval/suite.py", "eval/scores.json", "eval/sites", "test"]
-            subprocess.run(["tar", "czf", bundle, "-C", str(ROOT), "--exclude=__pycache__", "--exclude=*.sqlite", *files], check=True)
-            subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S], bundle, f"root@{ip}:/root/job/"], check=True)
-            r = subprocess.run(["ssh", *S, f"root@{ip}", "cd /root/job && mkdir -p ev && tar xzf eval_bundle.tgz -C ev && cd ev && "
-                                f"/root/venv/bin/python -m eval.suite /root/job/model --name {a.eval_name} --rule hybrid 2>&1 | "
-                                "grep -E 'texts|group|^H |^AI|AUROC|head-to-head'"], capture_output=True, text=True)
-            print(r.stdout[-2500:] or r.stderr[-800:], flush=True)
-            subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S],
-                            f"root@{ip}:/root/job/ev/eval/runs/{a.eval_name}.json", str(ROOT / "eval/runs/")], check=False)
-            subprocess.run(["ssh", *S, f"root@{ip}", "rm -rf /root/job/ev /root/job/eval_bundle.tgz"], check=False)
-            pathlib.Path(bundle).unlink(missing_ok=True)
-        out = ROOT / a.out
-        out.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["scp", "-r", *[x.replace("-p", "-P") if x == "-p" else x for x in S], f"root@{ip}:/root/job/model/.", str(out)], check=False)
-        subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S], f"root@{ip}:/root/job/train.log", str(out)], check=False)
-        print("downloaded to", out, flush=True)
-        return 0 if (out / "model.safetensors").exists() else 5
+        return finish_job(a, S, ip)
     finally:
         mins = (time.time() - t0) / 60
+        delete(pid, "job finished")
+        ledger(event="delete", pod=pid, price=price, minutes=round(mins, 1), est_cost=round(price * mins / 60, 3))
+        print(f"~{mins:.0f} min at ${price}/h = ~${price * mins / 60:.2f}", flush=True)
+
+
+def finish_job(a, S, ip):
+    """Follow train.log until done, score the test sets on the pod, download the model."""
+    last = 0
+    while True:                                                   # follow the log until done or dead
+        time.sleep(30)
+        r = subprocess.run(["ssh", *S, f"root@{ip}", f"tail -n +{last + 1} /root/job/train.log"], capture_output=True, text=True)
+        if r.returncode != 0:
+            continue
+        new = r.stdout.split("\n")[:-1]       # complete lines only; splitlines() also splits tqdm's \r and
+        last += len(new)                      # overcounted vs tail -n, which froze the progress output
+        for l in new:
+            if any(k in l for k in ("step ", "val @", "saved", "done;", "Traceback", "Error", "autocast", "extra", "train ")):
+                print(l, flush=True)
+        tail = subprocess.run(["ssh", *S, f"root@{ip}", "tail -n 60 /root/job/train.log; pgrep -f train_kaggle.py >/dev/null && echo __ALIVE__"],
+                              capture_output=True, text=True).stdout
+        if "done;" in tail:
+            break
+        if "__ALIVE__" not in tail:
+            print("trainer exited without 'done'", flush=True)
+            break
+    if a.eval_name:                                              # score the test sets here (GPU) instead of on the laptop
+        bundle = "/tmp/eval_bundle.tgz"
+        files = ["detector", "eval/__init__.py", "eval/suite.py", "eval/scores.json", "eval/sites", "test"]
+        subprocess.run(["tar", "czf", bundle, "-C", str(ROOT), "--exclude=__pycache__", "--exclude=*.sqlite", *files], check=True)
+        subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S], bundle, f"root@{ip}:/root/job/"], check=True)
+        r = subprocess.run(["ssh", *S, f"root@{ip}", "cd /root/job && mkdir -p ev && tar xzf eval_bundle.tgz -C ev && cd ev && "
+                            f"/root/venv/bin/python -m eval.suite /root/job/model --name {a.eval_name} --rule hybrid 2>&1 | "
+                            "grep -E 'texts|group|^H |^AI|AUROC|head-to-head'"], capture_output=True, text=True)
+        print(r.stdout[-2500:] or r.stderr[-800:], flush=True)
+        subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S],
+                        f"root@{ip}:/root/job/ev/eval/runs/{a.eval_name}.json", str(ROOT / "eval/runs/")], check=False)
+        subprocess.run(["ssh", *S, f"root@{ip}", "rm -rf /root/job/ev /root/job/eval_bundle.tgz"], check=False)
+        pathlib.Path(bundle).unlink(missing_ok=True)
+    out = ROOT / a.out
+    out.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["scp", "-r", *[x.replace("-p", "-P") if x == "-p" else x for x in S], f"root@{ip}:/root/job/model/.", str(out)], check=False)
+    subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S], f"root@{ip}:/root/job/train.log", str(out)], check=False)
+    print("downloaded to", out, flush=True)
+    return 0 if (out / "model.safetensors").exists() else 5
+
+
+def follow_existing(a):
+    pid = a.attach
+    created = price = None
+    for l in LEDGER.read_text().splitlines():
+        e = json.loads(l)
+        if e.get("pod") == pid and e.get("event") == "create":
+            created, price = time.mktime(time.strptime(e["ts"], "%Y-%m-%d %H:%M:%S")), float(e["price"])
+    if created is None:
+        print("pod not in the ledger:", pid)
+        return 2
+    left = max(5, a.max_minutes - (time.time() - created) / 60)
+    subprocess.Popen(["bash", "-c", f'sleep {int(left * 60)}; curl -s -X DELETE -H "Authorization: Bearer $(cat ~/.config/runpod/api_key)" '
+                      f'{API}/pods/{pid} >/dev/null; echo "watchdog deleted {pid} at $(date)" >> "{ROOT}/train/runpod/watchdog.log"'],
+                     start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        code, p = api("GET", f"/pods/{pid}")
+        ip, port = p.get("publicIp"), (p.get("portMappings") or {}).get("22")
+        print(f"attached to {pid} at {ip}:{port}; watchdog in {left:.0f} min", flush=True)
+        return finish_job(a, ssh_args(ip, port), ip)
+    finally:
+        mins = (time.time() - created) / 60
         delete(pid, "job finished")
         ledger(event="delete", pod=pid, price=price, minutes=round(mins, 1), est_cost=round(price * mins / 60, 3))
         print(f"~{mins:.0f} min at ${price}/h = ~${price * mins / 60:.2f}", flush=True)

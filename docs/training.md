@@ -25,6 +25,9 @@ Every builder removes any text that appears in a test set (normalised-text hash)
   - a detached watchdog deletes the pod after `--max-minutes` whatever happens; the pod is deleted as soon as the
     model is downloaded; every pod is recorded with its price and minutes in a local ledger;
   - the image's preinstalled packages are bypassed with a clean, pinned venv built by `uv` on the pod.
+  - `--attach <pod-id>` re-attaches to a pod that is already training (after the laptop-side runner was killed): it
+    re-arms the watchdog for the remaining minutes, follows the log, scores on the pod, downloads and deletes it.
+    Run the runner itself as a `systemd-run --user` unit so a closed terminal or session can't kill it.
 
 Options: `BASE` (tropa-mini or any backbone — a fresh 4-class head is added), `EPOCHS`, `LR`, `EVAL_EVERY`.
 Selection score: 0.5 · (1 − worst-domain false-positive rate) + 0.5 · catch rate on the validation + dev sets.

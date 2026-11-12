@@ -27,7 +27,7 @@ OUT_H = ROOT / "train/raw/short_human.jsonl"
 OUT_A = ROOT / "train/raw/short_ai.jsonl"
 rng = random.Random(23)
 MODELS = {"claude-haiku-5-5": 4, "gemini-3-flash": 4, "gpt-5.6-luna": 3, "gpt-6-luna": 3, "gpt-oss-120b-medium": 3,
-          "claude-sonnet-5-5": 2, "gpt-6-sol": 2, "gemini-3.8-flash-high": 2, "claude-opus-5-5": 1, "claude-fable-5-2": 1}
+          "claude-sonnet-5-5": 2, "gpt-6-sol": 2, "gemini-3.8-flash-high": 2, "claude-opus-5-5": 1}
 GENRES = [
     "a short reply email to a coworker who asked whether you can cover their shift on Friday",
     "a two-sentence email asking a recruiter whether the role is still open",

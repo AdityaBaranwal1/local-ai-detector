@@ -45,6 +45,9 @@ def real_secrets():
         except (OSError, ValueError, StopIteration, IndexError):
             pass
     read("runpod api key", "~/.config/runpod/api_key")
+    read("openrouter key", "~/.config/openrouter/api_key")
+    read("groq key", "~/.config/groq/api_key")
+    read("nvidia key", "~/.config/nvidia/api_key")
     read("kaggle token", "~/.kaggle/access_token")
     read("kaggle key", "~/.kaggle/kaggle.json", lambda s: __import__("json").loads(s)["key"])
     read("proxy api key", "~/docker/cliproxyapi/config.yaml", lambda s: re.search(r'api-keys:\s*\n\s*-\s*"([^"]+)"', s).group(1))
