@@ -36,3 +36,7 @@ eval/sol/*/interim.html
 eval/sol/*/*.log
 eval/sol/*/models.json
 eval/sol/*/audit.json
+eval/sol/*/zerogpt.json
+eval/sol/*/proxy_ai.json
+eval/sol/*/*candidates*.json
+eval/sol/*/PHASE_A.md

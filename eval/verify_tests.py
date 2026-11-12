@@ -54,16 +54,25 @@ def main():
     check("pile of LLM words -> FAIL (strong tell)", v.get("verdict") == "FAIL" and any(p.get("rule") == "llm-vocab" and p.get("severity") == "strong" for p in v["problems"]), v.get("summary", "")[:90])
     code, v = post({"text": "Hi [Hiring Manager Name], " + human_email, "fresh": FRESH})
     check("placeholder -> FAIL", v.get("verdict") == "FAIL" and any(p.get("rule") == "placeholder" for p in v["problems"]))
+    # real short human writing must pass the gate. (human_email above is a synthetic fixture -- written by an AI
+    # early in the project -- fine for the tell/API checks, but no evidence about human writing: since the v6+v7
+    # engine it reads ~35 %.) 10 short pre-ChatGPT human texts from the local, unpublished test set; >= 9 must PASS.
+    tf = pathlib.Path(__file__).resolve().parent.parent / "test/ood.jsonl"
+    if tf.exists():
+        real = sorted((json.loads(l) for l in tf.read_text().splitlines()), key=lambda r: hashlib.sha256(r["text"].encode()).hexdigest())
+        real = [r["text"] for r in real if r["label"] == 0 and 30 <= len(r["text"].split()) <= 120][:10]
+        passed = sum(post({"text": t, "fresh": FRESH})[1].get("verdict") == "PASS" for t in real)
+        check("real short human texts -> PASS (>= 9 of 10)", passed >= 9, f"{passed}/10 PASS")
     code, v = post({"text": human_email, "fresh": FRESH})
-    check("short human email -> PASS", v.get("verdict") == "PASS", v.get("summary", "")[:90])
+    first = v.get("verdict")
     sha = hashlib.sha256(human_email.encode()).hexdigest()
     code, v2 = post({"text": human_email})
     check("repeat is served from the store", v2.get("from_store") is True)
     with urllib.request.urlopen(f"{URL}/verdict/{sha}", timeout=10) as r:
         st = json.load(r)
-    check("GET /verdict/<sha> returns it, without text", st["verdict"] == "PASS" and "quote" not in json.dumps(st) and "Raj" not in json.dumps(st))
+    check("GET /verdict/<sha> returns it, without text", st["verdict"] == first and "quote" not in json.dumps(st) and "Raj" not in json.dumps(st))
     code, v = post(human_email, ctype="text/plain")
-    check("raw text/plain body works", code == 200 and v.get("verdict") == "PASS")
+    check("raw text/plain body works", code == 200 and v.get("verdict") == first)
     code, v = post({"text": "   "})
     check("empty -> 400", code == 400)
     code, v = post({"text": human_email, "max_ai": 5})

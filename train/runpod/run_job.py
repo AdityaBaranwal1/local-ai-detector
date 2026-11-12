@@ -153,11 +153,13 @@ def finish_job(a, S, ip):
     last = 0
     while True:                                                   # follow the log until done or dead
         time.sleep(30)
-        r = subprocess.run(["ssh", *S, f"root@{ip}", f"tail -n +{last + 1} /root/job/train.log"], capture_output=True, text=True)
+        r = subprocess.run(["ssh", *S, f"root@{ip}", f"tail -n +{last + 1} /root/job/train.log"], capture_output=True)
         if r.returncode != 0:
             continue
-        new = r.stdout.split("\n")[:-1]       # complete lines only; splitlines() also splits tqdm's \r and
-        last += len(new)                      # overcounted vs tail -n, which froze the progress output
+        # bytes, not text=True: universal-newline decoding turns tqdm's \r into line breaks, so the count drifted
+        # past tail -n's and the progress output froze
+        new = r.stdout.decode(errors="replace").split("\n")[:-1]
+        last += len(new)
         for l in new:
             if any(k in l for k in ("step ", "val @", "saved", "done;", "Traceback", "Error", "autocast", "extra", "train ")):
                 print(l, flush=True)

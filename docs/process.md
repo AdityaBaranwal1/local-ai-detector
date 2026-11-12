@@ -122,5 +122,31 @@ The bias problem is gone on this set; the gap is **naturally casual AI writing**
 including a generated LinkedIn networking message that scored 27 % and passed the gate. That is exactly the writing
 this detector exists for (outreach, recruiter replies, follow-ups, short application answers), so it is the next target.
 
-_Next: matched casual-professional data (AI-written and real human messages of the same kinds), open-model text, and a
-two-phase review (the reviewer builds its set while the model trains; scoring runs on the training pod)._
+## Round 6 — casual job-search messages (v7)
+
+The writing this detector exists for — LinkedIn outreach, recruiter replies, follow-ups, short application answers —
+had almost no matched human/AI data. The owner's own email couldn't be the human side (much of it is AI-assisted), so:
+
+- **Human, 4,120 texts, 2008–2020:** Hacker News "Who wants to be hired?" intros, Stack Exchange workplace /
+  freelancing / PM posts, 2017 brand support replies on Twitter, FOIA work email, Ubuntu IRC, and Reddit career
+  subreddits (2015–2020, via the Arctic Shift archive). Kaggle's "cover letter" / "recruiter" / "Slack" sets were all
+  2023+ and mostly LLM-made: rejected. (`train/build_casual_human.py`, `train/build_reddit_career.py`)
+- **AI, 3,661 texts (548 humanized):** for 2,400 of the human texts a model writes its own text of the same kind,
+  same situation, same length (it sees only the first ~15 words and is told not to continue them), plus 800 of the
+  owner's genres in mostly natural, restrained styles. (`train/build_casual.py`)
+- Plus 3,145 open-weights texts (Groq, OpenRouter, NVIDIA free endpoints).
+
+v7 alone flags too much human text on the test sets (8.8 % overall, 16 % of blog/other, 11 % of native-English writing). But on the 750 casual texts held back from its
+training it catches **97.5 %** of AI at **1 %** false positives — and the combiner, fitted only on the test sets,
+was throwing that away (54 %). Refitted with the held-back casual texts as their own domain (still cross-fitted,
+`eval/stack_casual.py`), the best pair drops tropa-mini altogether:
+
+| combiner | test sets: humans flagged / worst group / humanized / vs ZeroGPT | held-back casual: AI caught / your genres / humans flagged |
+|---|---|---|
+| v0 + v6 (was live) | 1.3 % / 2.9 % / 90 % / 281 vs 280 | 62 % / 86 % / 1.5 % |
+| **v6 + v7 (live)** | **1.9 % / 3.8 % / 88 % / 281 vs 280** | **86 % / 97 % / 0 %** |
+
+Caveat: the held-back casual texts come from the same sources and generators as v7's training data, so those numbers
+are optimistic; the independent round-3 set (different models, different human sources, a third of it the owner's
+genres) is the real test. The verify tests' "short human email" fixture turned out to be AI-written (it now reads
+35 %); the test now uses 10 real pre-ChatGPT human texts instead (≥ 9 must pass).

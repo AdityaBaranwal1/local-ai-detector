@@ -7,7 +7,7 @@
 Built in the open, measured honestly against ZeroGPT, and judged by an independent GPT-6.1 reviewer.
 
 ![runs on](https://img.shields.io/badge/runs%20on-GTX%201660%20Ti%20(6%20GB)-2a78d6)
-![model](https://img.shields.io/badge/engine-DeBERTa--v3%20%2B%20ModernBERT%20combiner-6250d6)
+![model](https://img.shields.io/badge/engine-2%C3%97%20ModernBERT--large%20combiner-6250d6)
 ![privacy](https://img.shields.io/badge/texts-never%20leave%20the%20box-1baf7a)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 ![vs ZeroGPT](https://img.shields.io/badge/vs%20ZeroGPT-281%20%2F%20291%20vs%20280-1baf7a)
@@ -45,7 +45,9 @@ that builds its own fresh test set each round.
 | **mb5** ModernBERT-large | 273 vs 280 | 8.6 % | 14 % 100–250 words | 94 % | |
 | **v6** ModernBERT-large + matched Wikipedia/PubMed pairs | 278 vs 280 | 3.6 % | 6.9 % blog/other | 89 % | |
 | combiner v0 + mb5² | 278 vs 280 | 1.6 % | 2.9 % | 88 % | live until 2026-11-11 23:40 |
-| **combiner v0 + v6² — live** | **281 vs 280** ✓ | **1.2 %** ✓ | **2.4 %** ✓ | **88 %** ✓ | review round 2: **9.4/10 vs ZeroGPT 9.8** · not yet ≥ ZeroGPT |
+| combiner v0 + v6² | 281 vs 280 | 1.2 % | 2.4 % | 88 % | review round 2: 9.4/10 vs ZeroGPT 9.8 |
+| **v7** ModernBERT-large + matched casual job-search messages | 274 vs 280 | 8.8 % | 16 % blog/other ✗ | 92 % | alone: too eager on formal text |
+| **combiner v6 + v7² — live** | **281 vs 280** ✓ | **1.9 %** ✓ | **3.8 %** ✓ | **88 %** ✓ | held-back casual messages: 86 % AI caught (v0 + v6: 62 %), 0 % humans flagged · review round 3 running |
 
 ¹ correct verdicts on the 291 held-out texts ZeroGPT has also judged (out of 4,257 held-out texts in all);
 ² a logistic-regression combiner over the two models' class probabilities, **cross-fitted**: each half of the texts
@@ -65,7 +67,7 @@ see the score without it. Agents get the same information as JSON from <code>POS
 ```mermaid
 flowchart LR
     T[text] --> S1[split<br/>sentences + spans]
-    S1 --> M[models<br/>DeBERTa-v3 + ModernBERT<br/>→ learned combiner]
+    S1 --> M[models<br/>2× ModernBERT-large<br/>→ learned combiner]
     M --> D[drivers<br/>which sentences<br/>push the score]
     T --> TL[tells<br/>stock phrases,<br/>placeholders, markdown]
     D --> V{verdict}
