@@ -11,6 +11,7 @@ Type=simple
 WorkingDirectory=%h/All code/ai-detector
 # Models come from the local Hugging Face cache only: nothing is fetched (or sent) at run time.
 Environment=HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
+# Environment="AI_STACKER=%h/ai-detector/models/stacker.json"   # learned combiner (eval/stack.py --save); replaces AI_MODEL
 ExecStart="%h/All code/ai-detector/.venv/bin/python" -m uvicorn detector.server:app --host 127.0.0.1 --port 8323 --no-access-log
 Restart=always
 RestartSec=5

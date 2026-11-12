@@ -71,6 +71,7 @@ def main():
     ap.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
     ap.add_argument("--max-price", type=float, default=MAX_PRICE, help="hard $/h cap, checked on the created pod")
     ap.add_argument("--base", default="", help="backbone for train_kaggle.py (BASE env); default tropa-mini")
+    ap.add_argument("--eval-name", default="", help="also score the test sets on the pod -> eval/runs/<name>.json")
     a = ap.parse_args()
     if not SSH_KEY.exists():
         subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "runpod-ai-detector", "-f", str(SSH_KEY)], check=True)
@@ -129,7 +130,8 @@ def main():
         r = subprocess.run(["ssh", *S, f"root@{ip}", boot + " && /root/venv/bin/python -c 'import torch,transformers;print(torch.__version__, transformers.__version__, torch.cuda.is_available())'"],
                            capture_output=True, text=True)
         print("env:", (r.stdout.strip() or r.stderr.strip()[-300:]), flush=True)
-        if r.returncode != 0:
+        if r.returncode != 0 or not r.stdout.strip().endswith("True"):   # CUDA must work, or we'd bill a CPU run
+            print("CUDA not available on this host: giving the pod back", flush=True)
             return 6
         run = (f"cd /root/job && {base}DATA_DIR=/root/job/data OUT_DIR=/root/job/model EPOCHS={a.epochs} "
                f"nohup /root/venv/bin/python train_kaggle.py > train.log 2>&1 & echo started")
@@ -152,6 +154,19 @@ def main():
             if "__ALIVE__" not in tail:
                 print("trainer exited without 'done'", flush=True)
                 break
+        if a.eval_name:                                              # score the test sets here (GPU) instead of on the laptop
+            bundle = "/tmp/eval_bundle.tgz"
+            files = ["detector", "eval/__init__.py", "eval/suite.py", "eval/scores.json", "eval/sites", "test"]
+            subprocess.run(["tar", "czf", bundle, "-C", str(ROOT), "--exclude=__pycache__", "--exclude=*.sqlite", *files], check=True)
+            subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S], bundle, f"root@{ip}:/root/job/"], check=True)
+            r = subprocess.run(["ssh", *S, f"root@{ip}", "cd /root/job && mkdir -p ev && tar xzf eval_bundle.tgz -C ev && cd ev && "
+                                f"/root/venv/bin/python -m eval.suite /root/job/model --name {a.eval_name} --rule hybrid 2>&1 | "
+                                "grep -E 'texts|group|^H |^AI|AUROC|head-to-head'"], capture_output=True, text=True)
+            print(r.stdout[-2500:] or r.stderr[-800:], flush=True)
+            subprocess.run(["scp", *[x.replace("-p", "-P") if x == "-p" else x for x in S],
+                            f"root@{ip}:/root/job/ev/eval/runs/{a.eval_name}.json", str(ROOT / "eval/runs/")], check=False)
+            subprocess.run(["ssh", *S, f"root@{ip}", "rm -rf /root/job/ev /root/job/eval_bundle.tgz"], check=False)
+            pathlib.Path(bundle).unlink(missing_ok=True)
         out = ROOT / a.out
         out.mkdir(parents=True, exist_ok=True)
         subprocess.run(["scp", "-r", *[x.replace("-p", "-P") if x == "-p" else x for x in S], f"root@{ip}:/root/job/model/.", str(out)], check=False)

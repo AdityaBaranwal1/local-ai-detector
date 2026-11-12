@@ -9,6 +9,7 @@ Nothing is logged or stored: texts live only for the duration of a request.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import logging
 import os
@@ -23,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from . import tells
 from . import verify as V
-from .engines import Classifier, Ensemble
+from .engines import Classifier, Ensemble, Stacked
 from .gpu import GpuLock
 from .score import analyse
 
@@ -36,6 +37,11 @@ MAX_WORDS = 6000
 MODEL = os.environ.get("AI_MODEL", "wasitaigeneratedcom/tropa-mini-ai-text-detector")   # comma-separated = ensemble
 MODELS = [m.strip() for m in MODEL.split(",") if m.strip()]
 RULE = "hybrid"     # engines.Classifier.p_ai: P(ai), or 1 - P(human) when P(human) < 1 %
+# Learned combiner (eval/stack.py --save): a JSON with member paths + coefficients. Set -> it replaces AI_MODEL.
+STACKER = os.environ.get("AI_STACKER", "").strip()
+if STACKER:
+    MODELS = json.loads(pathlib.Path(STACKER).read_text())["paths"]
+    RULE = "stack@" + hashlib.sha256(pathlib.Path(STACKER).read_bytes()).hexdigest()[:8]
 
 
 def _one_version(m):
@@ -71,8 +77,12 @@ class Engine:
 
     def _cpu(self):
         if self.cpu is None:
-            members = [Classifier(pathlib.Path(m).name or m, m, "meanpool", 512).load("cpu") for m in MODELS]
-            self.cpu = members[0] if len(members) == 1 else Ensemble(members)
+            load = lambda m: Classifier(pathlib.Path(m).name or m, m, "meanpool", 512).load("cpu")
+            if STACKER:
+                self.cpu = Stacked.from_file(STACKER, load)
+            else:
+                members = [load(m) for m in MODELS]
+                self.cpu = members[0] if len(members) == 1 else Ensemble(members)
         return self.cpu
 
     def _gpu(self):
@@ -214,6 +224,20 @@ def verdict(sha: str, max_ai: float = V.DEFAULT_MAX_AI):
     if not hit:
         raise HTTPException(404, "no verdict for that hash under the current versions")
     return {**hit, "from_store": True}
+
+
+@app.get("/progress")
+def progress_page():
+    return FileResponse(STATIC / "progress.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/progress.json")
+def progress_json():
+    """Training progress written by scripts/progress_watch.py (job steps, ETA, cost, plan). No texts."""
+    f = V.DATA / "progress.json"
+    if not f.exists():
+        raise HTTPException(404, "no progress file yet")
+    return FileResponse(f, media_type="application/json", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/")

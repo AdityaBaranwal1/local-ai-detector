@@ -64,7 +64,7 @@ class MeanPoolHead(nn.Module):
 
 import re as _re
 _DOMAIN = [(r"wikipedia|squad|wiki_csai|wikihow|/wiki", "encyclopedic"), (r"pmc|CS224N|sci_gen|arxiv|peerread|abstract|medicine|finance", "academic"),
-           (r"news|xsum|cnn", "news"), (r"literature|novel|story|roct|/wp\b|wp_|writingprompts|hswag", "fiction"),
+           (r"news|xsum|cnn", "news"), (r"literature|novel|story|roct|/wp\b|wp_|writingprompts|hswag|gutenberg", "fiction"),
            (r"reddit|cmv|tldr|eli5|forum|post", "forum"), (r"open_qa|hc3|qa", "Q&A"), (r"email|enron", "email"),
            (r"review|yelp|amazon", "review"), (r"TOEFL|College|Hewlett|ellipse|icnale|essay|persuade|daigt", "essay")]
 

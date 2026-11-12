@@ -101,7 +101,8 @@ def score_probs(model, rows, name, bs=8):
     if todo:
         eng = Classifier(name, model, "meanpool", 512)
         lock = GpuLock()
-        lock.acquire()
+        if lock.path.exists():          # the homelab's shared GPU lock; absent on a rented pod
+            lock.acquire()
         try:
             eng.load("cuda")
             pieces = []                                  # (row index, chunk text, n tokens)

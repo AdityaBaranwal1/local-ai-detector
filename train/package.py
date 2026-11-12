@@ -24,9 +24,13 @@ def main(out):
             r = json.loads(l)
             rows.append({"text": r["text"], "label": LABEL[r["label"]], "src": f"gen/{r['label']}/{r.get('task')}/{r.get('style')}"})
     extra, dev = [], []
-    for l in (ROOT / "train/data/extra.jsonl").read_text().splitlines():
-        r = json.loads(l)
-        (dev if int(hashlib.md5(r["text"][:500].encode()).hexdigest(), 16) % 10 == 0 else extra).append(r)
+    for name in ("extra.jsonl", "extra2.jsonl", "short.jsonl", "expo.jsonl"):   # domain-balanced, lit/academic/wiki, short-form, expository
+        f = ROOT / "train/data" / name
+        if not f.exists():
+            continue
+        for l in f.read_text().splitlines():
+            r = json.loads(l)
+            (dev if int(hashlib.md5(r["text"][:500].encode()).hexdigest(), 16) % 10 == 0 else extra).append(r)
     for name, part in (("train", rows), ("extra", extra), ("dev", dev)):
         with open(out / f"{name}.jsonl", "w") as f:
             for r in part:

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detector Training Progress</title>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--ink:#1d1c1a;--muted:#6b6862;--line:#e3e0da;--accent:#2d4a8a;--good:#2f7d4f;--warn:#b7791f;--bad:#c0392b;--bar:#2a78d6;--track:#ebe9e4}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#151513;--panel:#1e1e1b;--ink:#ecebe7;--muted:#a19e97;--line:#33322e;--accent:#8fa9e8;--good:#5dbb82;--warn:#e0a845;--bad:#ef6b5b;--bar:#3987e5;--track:#2a2a27}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h2{font-size:15px;margin:0 0 2px;display:flex;justify-content:space-between;gap:8px}
+.state{font-size:12px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.state.training,.state.scoring{color:var(--accent);border-color:var(--accent)}
+.state.done{color:var(--good);border-color:var(--good)}
+.meta{color:var(--muted);font-size:12.5px;margin-bottom:10px}
+.bar{height:10px;background:var(--track);border-radius:5px;overflow:hidden;margin:6px 0 4px}
+.bar>div{height:100%;background:var(--bar);border-radius:5px;transition:width .6s}
+.row{display:flex;justify-content:space-between;font-size:13px;font-variant-numeric:tabular-nums}
+dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:10px 0 0;font-size:13px}
+dt{color:var(--muted)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.plan{margin-top:16px}
+.plan ol{list-style:none;padding:0;margin:8px 0 0}
+.plan li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.plan li:last-child{border-bottom:0}
+.dot{width:18px;text-align:center;flex:none}
+.plan li.done{color:var(--muted)} .plan li.now{font-weight:600}
+.plan small{color:var(--muted);font-weight:400;margin-left:auto;text-align:right}
+.money .bar>div{background:var(--good)}
+.empty{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Detector training progress</h1>
+  <div class="sub" id="sub">loading…</div>
+  <div class="grid" id="jobs"></div>
+  <div class="grid" style="margin-top:14px">
+    <section class="card plan"><h2>Plan</h2><ol id="plan"></ol></section>
+    <section class="card money"><h2>Runpod budget</h2>
+      <div class="bar"><div id="spentbar" style="width:0"></div></div>
+      <div class="row"><span id="spent">–</span><span id="budget">–</span></div>
+      <h2 style="margin-top:16px">Bar for calling Sol</h2>
+      <dl id="bar"></dl>
+    </section>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const fmtT = s => s == null ? "–" : s >= 3600 ? `${Math.floor(s/3600)} h ${Math.round(s%3600/60)} min` : `${Math.max(1, Math.round(s/60))} min`;
+const pct = v => v == null ? "–" : (v * 100).toFixed(1) + "%";
+const NAMES = {v5: "v5 · DeBERTa (tropa)", mb5: "v5 · ModernBERT-large", v4: "v4 · DeBERTa", job3: "v1 · ModernBERT-large", job2: "ModernBERT (failed start)"};
+async function load(){
+  let d;
+  try { d = await (await fetch("progress.json", {cache: "no-store"})).json(); }
+  catch (e) { $("#sub").textContent = "progress file not available yet"; return; }
+  const age = Math.round(Date.now()/1000 - d.updated);
+  $("#sub").textContent = `updated ${age < 60 ? age + " s" : Math.round(age/60) + " min"} ago · refreshes every 15 s`;
+  const jobs = (d.jobs || []).filter(j => j.pod);
+  $("#jobs").innerHTML = jobs.length ? jobs.map(j => {
+    const p = j.total ? j.step / j.total : (j.state === "done" ? 1 : 0);
+    const st = (j.state || "").split(" ")[0];
+    return `<section class="card"><h2>${esc(NAMES[j.name] || j.name)}<span class="state ${esc(st)}">${esc(j.state)}</span></h2>
+      <div class="meta">${esc(j.gpu)} · $${(j.price ?? 0).toFixed(2)}/h · $${(j.cost ?? 0).toFixed(2)} so far</div>
+      <div class="bar"><div style="width:${(p*100).toFixed(1)}%"></div></div>
+      <div class="row"><span>${j.total ? `step ${j.step} / ${j.total}` : esc(j.state)}</span><span>${j.state === "training" ? "≈ " + fmtT(j.eta_s) + " left" : (j.h2h ? `vs ZeroGPT ${j.h2h[0]}% : ${j.h2h[1]}%` : "")}</span></div>
+      ${j.val ? `<dl><dt>latest check (step ${j.val.at})</dt><dd></dd><dt>AUROC</dt><dd>${j.val.auroc.toFixed(4)}</dd>
+        <dt>human flagged</dt><dd>${pct(j.val.fp)}</dd><dt>worst domain</dt><dd>${esc(j.val.worst_domain)} ${pct(j.val.worst_fp)}</dd>
+        <dt>AI caught</dt><dd>${pct(j.val.catch)}</dd></dl>` : ""}</section>`;
+  }).join("") : `<section class="card empty">No training jobs right now.</section>`;
+  const icon = {done: "✓", now: "▶", next: "○", maybe: "◌"};
+  $("#plan").innerHTML = (d.plan || []).map(s => `<li class="${esc(s.state)}"><span class="dot">${icon[s.state] || "○"}</span>${esc(s.step)}<small>${esc(s.note || "")}</small></li>`).join("");
+  $("#spent").textContent = `$${(d.spent ?? 0).toFixed(2)} spent`;
+  $("#budget").textContent = `of $${(d.budget ?? 10).toFixed(2)}`;
+  $("#spentbar").style.width = Math.min(100, (d.spent || 0) / (d.budget || 10) * 100) + "%";
+  $("#bar").innerHTML = (d.bar || []).map(b => `<dt>${esc(b[0])}</dt><dd>${esc(b[1])}</dd>`).join("");
+}
+load(); setInterval(load, 15000);
+</script>
+</body>
+</html>

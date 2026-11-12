@@ -11,8 +11,10 @@ Every engine returns P(AI) in [0, 1] (zero-shot ones return a raw statistic that
 from __future__ import annotations
 
 import gc
+import json
 import math
 import os
+import pathlib
 import threading
 
 import torch
@@ -127,7 +129,11 @@ class Classifier:
         """A copy of this classifier on the GPU (fp32: fp16 is ~7x slower on a GTX 16xx); the CPU master stays."""
         import copy as _copy
         g = _copy.copy(self)
-        g.model = _copy.deepcopy(self.model).to("cuda").eval()
+        cls = MeanPoolHead if self.arch == "meanpool" else AutoModelForSequenceClassification
+        try:      # straight from disk onto the GPU: no second CPU copy (an ensemble would hit the unit's MemoryMax)
+            g.model = cls.from_pretrained(self.repo, dtype=torch.float32, device_map="cuda").eval()
+        except (ValueError, ImportError):
+            g.model = _copy.deepcopy(self.model).to("cuda").eval()
         g.device = "cuda"
         return g
 
@@ -174,6 +180,51 @@ class Ensemble:
 
     def gpu_copy(self):
         e = Ensemble([m.gpu_copy() for m in self.members], self.weights)
+        e.device = "cuda"
+        return e
+
+
+def _logit(p):
+    p = min(max(p, 1e-6), 1 - 1e-6)
+    return math.log(p / (1 - p))
+
+
+class Stacked(Ensemble):
+    """A learned combiner (eval/stack.py): logistic regression over each member's logit(1-P(human)), logit(P(ai)),
+    logit(P(humanized)). Fitted on one hash half of the held-out sets, reported on the other. The class
+    probabilities shown are the members' average; p_ai is the combiner's. Same interface as Classifier."""
+
+    def __init__(self, members, coef, intercept):
+        super().__init__(members)
+        self.coef, self.intercept = list(coef), float(intercept)
+        assert len(self.coef) == 3 * len(members), "stacker / member count mismatch"
+
+    @classmethod
+    def from_file(cls, path, load_member):
+        spec = json.loads(pathlib.Path(path).read_text())
+        return cls([load_member(m) for m in spec["paths"]], spec["coef"], spec["intercept"])
+
+    def _stack(self, per_member):
+        x = []
+        for p in per_member:
+            x += [_logit(1 - p.get("human", 0.0)), _logit(p.get("ai", 0.0)), _logit(p.get("humanized", 0.0) + 1e-6)]
+        z = self.intercept + sum(c * v for c, v in zip(self.coef, x))
+        return 1 / (1 + math.exp(-z))
+
+    def score(self, text):
+        parts = [m.score(text)["classes"] for m in self.members]
+        return {"p_ai": self._stack(parts), "classes": self._merge(parts)}
+
+    def score_many(self, texts, batch=8):
+        per = [[] for _ in texts]
+        for m in self.members:
+            for i in range(0, len(texts), batch):
+                for j, pr in enumerate(m._probs(texts[i:i + batch])):
+                    per[i + j].append(pr)
+        return [self._stack(ps) for ps in per]
+
+    def gpu_copy(self):
+        e = Stacked([m.gpu_copy() for m in self.members], self.coef, self.intercept)
         e.device = "cuda"
         return e
 
