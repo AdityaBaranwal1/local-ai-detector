@@ -137,21 +137,19 @@ def main():
         last = 0
         while True:                                                   # follow the log until done or dead
             time.sleep(30)
-            r = subprocess.run(["ssh", *S, f"root@{ip}", "wc -l < /root/job/train.log; tail -n +1 /root/job/train.log | tail -n 400"],
-                               capture_output=True, text=True)
+            r = subprocess.run(["ssh", *S, f"root@{ip}", f"tail -n +{last + 1} /root/job/train.log"], capture_output=True, text=True)
             if r.returncode != 0:
                 continue
-            lines = r.stdout.splitlines()
-            total = int(lines[0]) if lines and lines[0].strip().isdigit() else 0
-            new = [l for l in lines[1:]][-(total - last):] if total > last else []
+            new = r.stdout.splitlines()
+            last += len(new)
             for l in new:
                 if any(k in l for k in ("step ", "val @", "saved", "done;", "Traceback", "Error", "autocast", "extra", "train ")):
                     print(l, flush=True)
-            last = total
-            if any("done;" in l for l in lines) or any("Traceback" in l for l in lines[-40:]):
+            tail = subprocess.run(["ssh", *S, f"root@{ip}", "tail -n 60 /root/job/train.log; pgrep -f train_kaggle.py >/dev/null && echo __ALIVE__"],
+                                  capture_output=True, text=True).stdout
+            if "done;" in tail:
                 break
-            alive = subprocess.run(["ssh", *S, f"root@{ip}", "pgrep -f train_kaggle.py >/dev/null && echo yes || echo no"], capture_output=True, text=True)
-            if "no" in alive.stdout and not any("done;" in l for l in lines):
+            if "__ALIVE__" not in tail:
                 print("trainer exited without 'done'", flush=True)
                 break
         out = ROOT / a.out

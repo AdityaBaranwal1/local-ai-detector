@@ -123,6 +123,60 @@ class Classifier:
         self.model = None
         self.device = "cpu"
 
+    def gpu_copy(self):
+        """A copy of this classifier on the GPU (fp32: fp16 is ~7x slower on a GTX 16xx); the CPU master stays."""
+        import copy as _copy
+        g = _copy.copy(self)
+        g.model = _copy.deepcopy(self.model).to("cuda").eval()
+        g.device = "cuda"
+        return g
+
+
+class Ensemble:
+    """Several classifiers whose class probabilities are averaged (equal weights unless given).
+    Same interface as Classifier (score / score_many / p_ai / device), so verdicts and sentence drivers just work."""
+
+    def __init__(self, members, weights=None):
+        self.members = members
+        self.weights = weights or [1.0 / len(members)] * len(members)
+        self.device = members[0].device if members else "cpu"
+        self.name = "+".join(m.name for m in members)
+
+    def load(self, device):
+        for m in self.members:
+            m.load(device)
+        self.device = device
+        return self
+
+    def _merge(self, dicts):
+        keys = dicts[0].keys()
+        return {k: sum(w * d[k] for w, d in zip(self.weights, dicts)) for k in keys}
+
+    def p_ai(self, probs):
+        return self.members[0].p_ai(probs)
+
+    def score(self, text):
+        parts = [m.score(text) for m in self.members]
+        classes = self._merge([p["classes"] for p in parts])
+        return {"p_ai": self.p_ai(classes), "classes": classes}
+
+    def score_many(self, texts, batch=8):
+        per = [[] for _ in texts]
+        for m in self.members:
+            for i in range(0, len(texts), batch):
+                for j, pr in enumerate(m._probs(texts[i:i + batch])):
+                    per[i + j].append(pr)
+        return [self.p_ai(self._merge(ps)) for ps in per]
+
+    def unload(self):
+        for m in self.members:
+            m.unload()
+
+    def gpu_copy(self):
+        e = Ensemble([m.gpu_copy() for m in self.members], self.weights)
+        e.device = "cuda"
+        return e
+
 
 class ZeroShot:
     """Binoculars (Hans et al. 2024) and Fast-DetectGPT (Bao et al. 2024) from one observer/performer pair.

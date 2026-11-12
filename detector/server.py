@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 
 from . import tells
 from . import verify as V
-from .engines import Classifier
+from .engines import Classifier, Ensemble
 from .gpu import GpuLock
 from .score import analyse
 
@@ -33,31 +33,32 @@ GPU_IDLE_S = float(os.environ.get("GPU_IDLE_S", 60))     # keep the GPU (and its
 RAM_IDLE_S = float(os.environ.get("RAM_IDLE_S", 1800))   # drop the model from RAM after this long unused
 MAX_WORDS = 6000
 # The model: an HF id (tropa-mini at the evaluated revision) or a fine-tuned dir under models/ (train/train.py).
-MODEL = os.environ.get("AI_MODEL", "wasitaigeneratedcom/tropa-mini-ai-text-detector")
+MODEL = os.environ.get("AI_MODEL", "wasitaigeneratedcom/tropa-mini-ai-text-detector")   # comma-separated = ensemble
+MODELS = [m.strip() for m in MODEL.split(",") if m.strip()]
 RULE = "hybrid"     # engines.Classifier.p_ai: P(ai), or 1 - P(human) when P(human) < 1 %
 
 
-def model_version():
-    p = pathlib.Path(MODEL)
+def _one_version(m):
+    p = pathlib.Path(m)
     if p.is_dir():
-        cfg = (p / "config.json").read_bytes() if (p / "config.json").exists() else b""
         w = p / "model.safetensors"
         stamp = f"{w.stat().st_size}-{int(w.stat().st_mtime)}" if w.exists() else "missing"
-        return f"{p.name}@{stamp}+{RULE}"
-    ref = pathlib.Path.home() / ".cache/huggingface/hub" / ("models--" + MODEL.replace("/", "--")) / "refs/main"
+        return f"{p.name}@{stamp}"
+    ref = pathlib.Path.home() / ".cache/huggingface/hub" / ("models--" + m.replace("/", "--")) / "refs/main"
     rev = ref.read_text().strip()[:8] if ref.exists() else "missing"
-    return f"{MODEL.split('/')[-1]}@{rev}+{RULE}"
+    return f"{m.split('/')[-1]}@{rev}"
+
+
+def model_version():
+    return " + ".join(_one_version(m) for m in MODELS) + f"+{RULE}"
 
 
 def model_present():
-    p = pathlib.Path(MODEL)
-    if p.is_dir():
-        return (p / "model.safetensors").exists()
     return "missing" not in model_version()
 
 
 class Engine:
-    """The tropa-mini classifier: an fp32 master copy in RAM, an fp16 copy in VRAM only while we hold the GPU lock."""
+    """The detector (one model or an ensemble): fp32 master copy in RAM, a copy in VRAM only while we hold the GPU lock."""
 
     def __init__(self):
         self.mu = threading.Lock()
@@ -70,7 +71,8 @@ class Engine:
 
     def _cpu(self):
         if self.cpu is None:
-            self.cpu = Classifier("detector", MODEL, "meanpool", 512).load("cpu")
+            members = [Classifier(pathlib.Path(m).name or m, m, "meanpool", 512).load("cpu") for m in MODELS]
+            self.cpu = members[0] if len(members) == 1 else Ensemble(members)
         return self.cpu
 
     def _gpu(self):
@@ -78,10 +80,7 @@ class Engine:
             return None
         if self.gpu is None:
             try:
-                g = copy.copy(self._cpu())
-                g.model = copy.deepcopy(g.model).to("cuda").eval()   # fp32: fp16 is ~7x slower on this GPU
-                g.device = "cuda"
-                self.gpu = g
+                self.gpu = self._cpu().gpu_copy()     # fp32: fp16 is ~7x slower on this GPU
             except torch.OutOfMemoryError:
                 self._drop_gpu()
                 return None
