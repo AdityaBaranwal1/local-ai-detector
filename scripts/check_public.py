@@ -6,7 +6,9 @@ Checks every tracked file (and, with --history, every blob in every commit) for:
      proxy key, the GitHub CLI token, ...) — read from their usual files, never printed;
   2. generic credential patterns (API-key prefixes, private keys, bearer tokens);
   3. private strings listed one per line in `.public-guard.local` (git-ignored: hostnames, home paths, emails);
-  4. files that must never be published (third-party test texts) — see FORBIDDEN.
+  4. files that must never be published (third-party test texts) — see FORBIDDEN;
+  5. with --history, commit metadata too: author/committer names and emails must not contain a private string or a
+     personal email address (use your GitHub no-reply address: <id>+<login>@users.noreply.github.com).
 Exit 0 = clean, 1 = found something (prints file + rule, never the secret itself).
 """
 import pathlib
@@ -96,6 +98,21 @@ def main():
         for s in private:
             if s in text:
                 problems.add(f"{path}: contains a private string from .public-guard.local ({s[:3]}…)")
+    if history:                                    # commit metadata: authors, committers, message trailers
+        meta = subprocess.run(["git", "log", "--all", "--format=%H%x09%an <%ae>%x09%cn <%ce>%x09%B%x00"], cwd=ROOT,
+                              capture_output=True, text=True).stdout
+        for rec in meta.split("\0"):
+            if not rec.strip():
+                continue
+            sha = rec.strip().split("\t", 1)[0][:8]
+            for who in re.findall(r"<([^>]+)>", rec):
+                if who.endswith("@users.noreply.github.com") or who.endswith("@anthropic.com"):
+                    continue
+                if re.search(r"@(gmail|yahoo|outlook|hotmail|icloud|proton(mail)?)\.", who, re.I):
+                    problems.add(f"commit {sha}: a personal email address in author/committer/trailer (use the GitHub no-reply address)")
+            for sv in private:
+                if sv in rec:
+                    problems.add(f"commit {sha}: metadata contains a private string from .public-guard.local ({sv[:3]}…)")
     scope = "every commit" if history else "tracked files"
     if problems:
         print(f"check_public: {len(problems)} problem(s) in {scope}:")
