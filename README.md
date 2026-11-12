@@ -45,6 +45,13 @@ that builds its own fresh test set each round.
 
 ¹ the 291 held-out texts ZeroGPT has also judged; everything else in [evaluation](docs/evaluation-v0.md).
 
+## What it looks like
+
+<img alt="The check page: 95 % AI, with the six sentences that drive the score highlighted (a fictional AI-written application answer)" src="docs/img/ui.png" width="100%">
+
+<sub>A fictional, AI-written application answer. Red = the sentences whose removal lowers the score most; hover one to
+see the score without it. Agents get the same information as JSON from <code>POST /verify</code>.</sub>
+
 ## How a check works
 
 ```mermaid
