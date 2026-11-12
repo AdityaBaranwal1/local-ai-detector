@@ -14,7 +14,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "score":
     from detector.engines import Classifier
     M = {"v0": "wasitaigeneratedcom/tropa-mini-ai-text-detector",
          "mb6": REPO + "/models/rp-modernbert-v6",
-         "mb7": REPO + "/models/rp-modernbert-v7"}
+         "mb7": REPO + "/models/rp-modernbert-v7", "mb8": REPO + "/models/rp-modernbert-v8"}
     rows = [json.loads(l) for l in open("/tmp/kgl-data7/dev.jsonl")]
     rows = [r for r in rows if r["src"].startswith("casual/")]
     json.dump(rows, open("/tmp/casdev/rows.json", "w"))
@@ -33,6 +33,13 @@ else:
     from eval.stack import feats
     from eval.suite import RUNS, load_sets
     crow = json.load(open("/tmp/casdev/rows.json"))
+    import os as _os
+    if _os.environ.get("LEAK_PKG"):             # held-back casual texts that a later package put into training: drop for every engine
+        _seen = {json.loads(l)["text"] for f in ("train.jsonl", "extra.jsonl") for l in open(_os.path.join(_os.environ["LEAK_PKG"], f))}
+        _keep = [i for i, r in enumerate(crow) if r["text"] not in _seen]
+        print(f"casual held-back texts: {len(_keep)} of {len(crow)} still unseen by the newest package", flush=True)
+    else:
+        _keep = list(range(len(crow)))
     import math
     LEN = "--length" in sys.argv
     def F(runs, names, r):
@@ -49,7 +56,7 @@ else:
         test = [r for r in load_sets() if all(r["k"] in runs[n] for n in names)]
         cas = [{"k": f"cd{i}", "label": 1 if r["label"] else 0, "src": r["src"], "text": r["text"], "casual": True,
                 "g": ("H native" if r["label"] == 0 else ("AI humanized" if r["label"] == 3 else "AI raw")), "zerogpt": None}
-               for i, r in enumerate(crow)]
+               for i, r in enumerate(crow) if i in set(_keep)]
         for r in test: r["label"] = 1 if r["label"] else 0
         rows = test + cas
         half = lambda r: (int(r["k"][2:]) % 2) if r.get("casual") else int(r["k"][:6], 16) % 2
@@ -88,11 +95,11 @@ else:
         if save:
             clf = fit([r for r in rows if half(r) == 0])
             paths = {"v0": "wasitaigeneratedcom/tropa-mini-ai-text-detector", "mb6": REPO + "/models/rp-modernbert-v6",
-                     "mb7": REPO + "/models/rp-modernbert-v7"}
+                     "mb7": REPO + "/models/rp-modernbert-v7", "mb8": REPO + "/models/rp-modernbert-v8"}
             json.dump({"models": names, "paths": [paths[n] for n in names], "fit_on": "hash half 0 of the held-out test sets + even rows of the v7 casual dev split",
                        "coef": clf.coef_[0].tolist(), "intercept": float(clf.intercept_[0]),
                        "features": "per model: logit(1-P(human)), logit(P(ai)), logit(P(humanized)+1e-6)" + ("; then log(words/100) and log(words/100) x each" if LEN else ""), "length_aware": LEN}, open(save, "w"), indent=1)
             print("saved", save)
-    for names in (["v0", "mb6"], ["v0", "mb7"], ["mb6", "mb7"], ["v0", "mb6", "mb7"]):
+    for names in [n.split("+") for n in _os.environ.get("COMBOS", "v0+mb6 mb6+mb7 mb6+mb8 mb7+mb8 v0+mb8").split()]:
         run(names)
-    if "--save" in sys.argv: run(["mb6", "mb7"], save=sys.argv[sys.argv.index("--save") + 1])
+    if "--save" in sys.argv: run(_os.environ.get("SAVE_COMBO", "mb6+mb7").split("+"), save=sys.argv[sys.argv.index("--save") + 1])

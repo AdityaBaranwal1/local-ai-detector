@@ -194,5 +194,30 @@ scores 8.2. The length-aware combiner trades two long human texts flagged (8/200
 detection — the owner's use case. Scoring all 400 texts with three models takes 92 s on the 1660 Ti; a Runpod pod
 would be ~15–20 min, nearly all of it uploading the models over a 36 Mbps uplink.
 
-_Paused here (2026-11-12): good enough for personal use. Next, if resumed: v8 (v7 data + 12 more generator models,
-already generated), a Qwen3-0.6B member, a generator-held-out internal benchmark, then review round 4._
+
+## Round 8 — more model families (v8)
+
+Round 3's misses were text from models we had never trained on, so v8 adds breadth without new generation cost:
+public datasets (2026 DeepSeek V4, Grok 4.6, GLM 5.3, Qwen 3.8 Max, Gemini 3.7, GPT-5.6 Luna Pro and Nemotron
+texts; real GPT-3.5/GPT-4 chat replies from WildChat; Llama-2, Mixtral, Mistral, Gemma, zephyr and tulu answers paired
+with human ones from Beemo), a casual pass from 12 more proxy models, free-tier open models, and ~2,900 of the owner's
+own Claude.ai replies (assistant text only, scrubbed: `train/build_transcripts.py`). A packaging-time sanitizer
+(`train/sanitize.py`, 21 test cases, `train/audit_data.py`) drops contact details and leftover code / tables /
+diagrams with the same rules for both labels; its review caught three bugs (prices read as LaTeX, `|`-separated human
+posts read as tables, bracketed asides read as placeholders).
+
+v8 alone: 281 vs ZeroGPT 280 on the shared test texts — the first single model of ours to pass it. With tropa-mini in
+a length-aware combiner:
+
+| engine | test sets: vs ZeroGPT / humans flagged / worst group | held-back casual AI caught | review texts, all 400 | round 3's set |
+|---|---|---|---|---|
+| v6 + v7 length-aware (was live) | 281 vs 280 / 1.8 % / 4.1 % | 92 % | 9.4 | 9.1 |
+| **v0 + v8 length-aware (live)** | **285 vs 280 / 1.3 % / 2.2 %** | **95 %** | **9.8** | **9.8** |
+| ZeroGPT | 280 | — | 9.9 | 9.8 |
+
+On the 400 review texts it now catches every raw-AI text (65/65), more casual/humanized AI than ZeroGPT (98 vs 97 of
+100) and more of the owner's genres (56 vs 55 of 57); the remaining gap is human texts flagged (4 vs 1 of 200).
+Caveat: those rounds are no longer unseen (round 3's generator choice informed v8's model list), so a fresh review
+round is the real test. Cost: 72 min on an A40, $0.71 — plus $0.04 for a second pod a hand-written retry loop started
+by mistake after the first finished (it looked for "pod up" in the last 60 log lines, which scoring had pushed out);
+caught and deleted within 4 minutes.

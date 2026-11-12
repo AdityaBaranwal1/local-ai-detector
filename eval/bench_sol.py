@@ -19,10 +19,13 @@ from detector.engines import Classifier, Stacked  # noqa: E402
 SOL = ROOT / "eval/sol"
 RUNS = ROOT / "eval/runs"
 MEMBERS = {"v0": "wasitaigeneratedcom/tropa-mini-ai-text-detector", "mb6": str(ROOT / "models/rp-modernbert-v6"),
-           "mb7": str(ROOT / "models/rp-modernbert-v7")}
+           "mb7": str(ROOT / "models/rp-modernbert-v7"), "mb8": str(ROOT / "models/rp-modernbert-v8")}
 ENGINES = {"v0+v6 (round 2's engine)": ("models/stacker-v0-mb6.json", ["v0", "mb6"]),
            "v6+v7 (round 3's engine)": ("models/stacker-mb6-mb7.json", ["mb6", "mb7"]),
-           "v6+v7 length-aware (new)": ("models/stacker-mb6-mb7-len.json", ["mb6", "mb7"])}
+           "v6+v7 length-aware (live)": ("models/stacker-mb6-mb7-len.json", ["mb6", "mb7"]),
+           "v0+v8 length-aware": ("models/stacker-v0-mb8-len.json", ["v0", "mb8"]),
+           "v6+v8 length-aware": ("models/stacker-mb6-mb8-len.json", ["mb6", "mb8"]),
+           "v7+v8 length-aware": ("models/stacker-mb7-mb8-len.json", ["mb7", "mb8"])}
 
 
 def load_rounds():
