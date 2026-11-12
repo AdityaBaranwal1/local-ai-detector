@@ -45,6 +45,19 @@ and ZeroGPT, overall accuracy for each, the 5–10 most instructive failures of 
 - **A score from 0 to 10 for our detector's AI-detection quality**, with ZeroGPT's performance on the same texts as
   the reference point, and one paragraph saying why.
 - **One line: is ours at least as good as ZeroGPT on this set? (yes/no)**
+- **One line: is this a frontier-level AI-text detector? (yes/no)** — judge it as a whole against what the best
+  public detectors do today, with these as the minimum: overall accuracy at least ZeroGPT's on your set; no human
+  subgroup with a clearly elevated false-positive rate (non-native writers, formal/academic/encyclopedic text,
+  casual/short text, professional email); a high catch rate on current frontier models *and* on casual, lowercase,
+  non-native-imitating and humanized AI text. Give the single biggest reason if no.
+- **Bias table:** false-positive rate on human texts by subgroup (native / non-native; formal / casual; short /
+  long; domain), ours vs ZeroGPT, with counts.
 - What would most improve ours.
+
+Make the human side hard on purpose — that's where detectors fail people: formal and academic writing,
+encyclopedic text, non-native writers of several first languages, short professional emails and form answers,
+casual messages. Make the AI side hard too: the newest models you can reach, plus the evasion styles above.
+Round 2 onward: build a **fresh** set (don't reuse earlier rounds' texts, the builder may have read them) and
+re-run the previous round's set too for comparison.
 
 Be strict and specific. Don't edit the detector's code or its service.

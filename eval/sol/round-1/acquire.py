@@ -23,7 +23,7 @@ for site in ['workplace','academia','interpersonal','writing']:
  time.sleep(1)
 # Inspect available proxy models without displaying any credential.
 import yaml
-config=yaml.safe_load(pathlib.Path('/home/you/docker/cliproxyapi/config.yaml').read_text())
+config=yaml.safe_load((pathlib.Path.home()/'docker/cliproxyapi/config.yaml').read_text())
 keys=config.get('api-keys',config.get('access',{}).get('api-keys',[]))
 if not keys:raise RuntimeError('No proxy key found')
 r=urllib.request.Request('http://127.0.0.1:8317/v1/models',headers={'Authorization':'Bearer '+keys[0]})

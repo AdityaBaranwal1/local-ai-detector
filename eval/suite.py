@@ -62,6 +62,11 @@ def load_sets():
         if r["src"].startswith("jabarian/") and int(key(r["text"])[:4], 16) % 4 and key(r["text"]) not in ZG_KEYS:
             continue
         rows.append({"text": r["text"], "label": 0 if r["label"] == 0 else 1, "src": r["src"], "zerogpt": None})
+    ood = ROOT / "test/ood.jsonl"      # MAGE / HC3 / ArguGPT / COLING samples never used for training
+    if ood.exists():
+        for l in ood.read_text().splitlines():
+            r = json.loads(l)
+            rows.append({"text": r["text"], "label": r["label"], "src": "ood/" + r["src"], "zerogpt": None})
     for r in json.loads((E / "sites/results.json").read_text()):
         rows.append({"text": r["text"], "label": 0 if r["id"].startswith("human") else 1,
                      "src": "sites/" + ("human" if r["id"].startswith("human") else "humanized" if "casual" in r["id"] else "ai"),
@@ -85,7 +90,7 @@ def load_sets():
     return out
 
 
-def score_probs(model, rows, name, bs=16):
+def score_probs(model, rows, name, bs=8):
     """Class probabilities per text, exactly as the service computes them (sentence-aligned chunks, length-weighted
     mean), but batched across texts and sorted by length so the GPU isn't padding one short chunk at a time."""
     from detector.engines import _chunks

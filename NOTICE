@@ -1,0 +1,19 @@
+local-ai-detector — third-party notices
+
+Code in this repository: MIT (see LICENSE).
+
+Models (not redistributed here; downloaded from Hugging Face at setup):
+  - wasitaigeneratedcom/tropa-mini-ai-text-detector — Apache-2.0
+  - desklib/ai-text-detector-v1.01 — MIT
+  - microsoft/deberta-v3-large — MIT
+  - answerdotai/ModernBERT-large — Apache-2.0
+  Fine-tuned weights derived from these keep their upstream licences.
+
+Datasets used for training/evaluation (not redistributed here; the scripts in train/ and eval/ download them):
+  Jabarian & Imas 2025 DetectionAI (MIT), ELLIPSE / Feedback Prize ELL, ICNALE, DAIGT v4, RAID, MAGE,
+  COLING-2025 MGT, HC3, AESLC (Enron), webis/tldr-17, WritingPrompts, CNN/DailyMail, Liang et al. 2023
+  ChatGPT-Detector-Bias, textsight AI-text-detection-benchmark-2026, ArguGPT. Each is subject to its own licence
+  and terms; check them before reusing the data.
+
+AI-generated training/evaluation texts were produced with commercial models through an OpenAI-compatible proxy;
+they are kept out of the repository with the third-party texts.

@@ -1,7 +1,7 @@
 import pathlib,json,urllib.request,urllib.error,time,re,hashlib,datetime,collections
 import yaml
 ROOT=pathlib.Path(__file__).resolve().parent
-KEY=yaml.safe_load(pathlib.Path('/home/you/docker/cliproxyapi/config.yaml').read_text())['access']['api-keys'][0]
+KEY=yaml.safe_load((pathlib.Path.home()/'docker/cliproxyapi/config.yaml').read_text())['access']['api-keys'][0]
 humans=json.loads((ROOT/'humans.json').read_text())
 MODELS=['claude-haiku-5-5','gemini-3-flash','gpt-oss-120b-medium']
 OUT=ROOT/'generation';OUT.mkdir(exist_ok=True)

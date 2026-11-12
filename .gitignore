@@ -12,3 +12,21 @@ test/
 eval/runs/
 models/
 .venv-lightning/
+eval/sol/*/downloads/
+# generated per user (train/kaggle/push.sh)
+train/kaggle/kernel-metadata.json
+# Runpod run records (pod ids, prices)
+train/runpod/ledger.jsonl
+train/runpod/watchdog.log
+# third-party / generated test texts: not redistributed (rebuild with the scripts next to them)
+eval/sol/*/texts.json
+eval/sol/*/results.json
+eval/sol/*/humans.json
+eval/sol/*/self_ai.json
+eval/sol/*/generation/
+eval/sol/*/evaluation.log
+eval/sol/*/comparison.html
+eval/sol/*/probe_*.json
+eval/sites/results.json
+.public-guard.local
+.venv-lightning/

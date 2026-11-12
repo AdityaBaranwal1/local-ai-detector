@@ -1,160 +1,134 @@
-# AI Detector (local)
+<div align="center">
 
-**One call tells an agent whether its draft reads as AI:** `ai-check draft.txt` (exit 0 PASS / 1 FAIL / 2 couldn't
-check), or `POST http://127.0.0.1:8323/verify {"text": ...}` → `PASS`/`FAIL` + what to rewrite. Agents run it on
-anything that goes out under the owner's name (emails, application answers, messages) before calling it final —
-the same idea as resume verify (`~/docker/resume-parsers`). See [Verify API](#verify-api).
+# 🔎 local-ai-detector
 
-Behind it: a ZeroGPT-style detector that runs entirely on this box (model from the local Hugging Face cache,
-`HF_HUB_OFFLINE=1`; texts never logged, verdicts stored by hash only), plus a paste page for the owner.
+**An AI-text detector that runs on a 6 GB laptop GPU — and a PASS/FAIL gate AI agents use on their own drafts.**
 
-- **Agents:** `ai-check` (`bin/ai-check`, symlinked in `~/.local/bin`) or `POST /verify`; `GET /verify` = usage.
-- **Page:** https://<host>.<tailnet>.ts.net:8450/ (tailnet only): % AI + highlighted sentences.
-- **Service:** user unit `ai-detector.service` (`deploy/ai-detector.service`, installed in `~/.config/systemd/user/`),
-  loopback `127.0.0.1:8323`, tailnet `:8450`. `systemctl --user restart ai-detector` after a code change.
-- **Homelab:** registry `host_services: ai-detector` (with `steps:`) + `serve: "8450"`; the job pipeline `uses` it;
-  `~/CLAUDE.md` §4l.
+Built in the open, measured honestly against ZeroGPT, and judged by an independent GPT-6.1 reviewer.
 
-## Verify API
+![runs on](https://img.shields.io/badge/runs%20on-GTX%201660%20Ti%20(6%20GB)-2a78d6)
+![model](https://img.shields.io/badge/model-DeBERTa--v3--large%20435M-6250d6)
+![privacy](https://img.shields.io/badge/texts-never%20leave%20the%20box-1baf7a)
+![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![status](https://img.shields.io/badge/status-training%20toward%20frontier-eda100)
 
-| | |
-|---|---|
-| `POST /verify` | JSON `{"text": "...", "max_ai": 0.30, "fresh": false}` (only `text` required) or the raw text (`Content-Type: text/plain`) → verdict JSON. `fresh` re-checks even if a verdict is stored |
-| `GET /verdict/<sha256>` | the stored verdict for `sha256(text as UTF-8)` under the **current** versions (offsets and scores, no text); `404` if none |
-| `GET /healthz` | `200` when the model is on disk and the splitter + tells load, else `503`. `steps` = each check with its version and state (the dashboard map draws them), `today` = verify counts |
-| `GET /verify` | usage text |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/headtohead-dark.png">
+  <img alt="Head-to-head with ZeroGPT: false-positive rate on human text and catch rate on AI text" src="docs/img/headtohead-light.png" width="100%">
+</picture>
+
+</div>
+
+## What it is
+
+- **A local detector.** Paste text, get the % AI and *which sentences* drive it. Nothing is sent anywhere: the model
+  loads from the local cache, texts are never logged.
+- **A gate for agents.** `ai-check draft.txt` → exit `0` PASS / `1` FAIL / `2` couldn't check, with the sentences to
+  rewrite and the "AI tells" to remove. Agents run it before they hand over an email or an application answer that
+  will go out under a person's name. → [Verify API](docs/verify-api.md)
+- **A public record of how it was built**: data, training runs, costs, failures, bias checks and independent
+  reviews, round by round. → [The process](docs/process.md)
+
+## Status
+
+The goal: a **frontier-level** detector — at least as accurate as ZeroGPT on fresh texts, with **no human subgroup
+unfairly flagged** (non-native writers, academic, encyclopedic, casual) and a high catch rate on current models and
+humanized text — that still runs on a GTX 1660 Ti. The bar is checked by an independent reviewer (GPT-6.1 Sol)
+that builds its own fresh test set each round.
+
+| Model | Held-out accuracy vs ZeroGPT¹ | Worst human group flagged | Humanized AI caught | Independent review |
+|---|---|---|---|---|
+| **v0** tropa-mini, as published | 89.7 % vs 96.2 % | 20 % (forum posts) | 48 % | 9.0/10 · not ≥ ZeroGPT |
+| **k3** full fine-tune, narrow data | 92.1 % vs 96.2 % | **48 % (academic)** ✗ | 97 % | not deployed (bias) |
+| **v4** + domain-balanced data | _training_ | | | |
+| **ModernBERT-large** (ensemble partner) | _training_ | | | |
+
+¹ the 291 held-out texts ZeroGPT has also judged; everything else in [evaluation](docs/evaluation-v0.md).
+
+## How a check works
+
+```mermaid
+flowchart LR
+    T[text] --> S1[split<br/>sentences + spans]
+    S1 --> M[model<br/>DeBERTa-v3-large<br/>4 classes]
+    M --> D[drivers<br/>which sentences<br/>push the score]
+    T --> TL[tells<br/>stock phrases,<br/>placeholders, markdown]
+    D --> V{verdict}
+    TL --> V
+    V -->|"AI < 30 % and<br/>no strong tell"| P[PASS]
+    V -->|otherwise| F[FAIL + what to rewrite]
+```
+
+- **Short texts** (emails, form answers, ≤ 225 words) are re-scored once *without each sentence*: the sentences
+  whose removal drops the score most are the ones to rewrite. Longer texts use ~150-word windows.
+- **Strict like a CI gate:** a check that didn't run is a FAIL, never a pass. Verdicts are cached by SHA-256 + every
+  version, never by text.
+- Details: [how it works](docs/how-it-works.md).
+
+## Quick start
 
 ```bash
-ai-check draft.txt                       # PASS: reads 4% AI (under 30%), no strong AI tells        -> exit 0
-echo "$TEXT" | ai-check --max-ai 0.2     # stricter line
-ai-check --json draft.txt | jq '.problems[] | {check, quote, msg}'
-curl -s -H 'Content-Type: application/json' -d '{"text": "..."}' http://127.0.0.1:8323/verify | jq '.verdict, .summary'
+git clone https://github.com/AdityaBaranwal1/local-ai-detector && cd local-ai-detector
+uv venv --python 3.13 .venv
+uv pip install --python .venv/bin/python --index-url https://download.pytorch.org/whl/cu126 torch==2.14.1
+uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/hf download wasitaigeneratedcom/tropa-mini-ai-text-detector      # or point AI_MODEL at a fine-tuned dir
+.venv/bin/python -m uvicorn detector.server:app --host 127.0.0.1 --port 8323
+
+# then
+open http://127.0.0.1:8323/                     # paste page
+bin/ai-check my-email.txt; echo "exit $?"       # agents
 ```
 
-**PASS only if every check ran and the text is clean:** the model's AI score is under `max_ai` (default **0.30** —
-text sent as the owner's should read clearly human, so the line sits below the 0.50 "reads as AI" verdict) **and**
-the tells linter found no *strong* tell. A check that did not run is a `FAIL` with `complete: false` (not stored); an
-HTTP error or no answer is a no too. **A client's rule: use the text only if `verdict == "PASS"`.**
+Running it as a service next to other GPU jobs, behind Tailscale: [homelab.md](docs/homelab.md).
 
-Response: `verdict`, `summary` (one line, written for an LLM to relay), `problems` (each with `check` = `model` or
-`tells`, `quote` = the exact text, `msg` = what to do; model items carry `without` = the score without that sentence
-for texts ≤ 225 words, or `score` for its 150-word window; tells carry `rule`, `severity`, `fix`), `ai_score`,
-`max_ai`, `notes`, `words`, `classes`, `sha256`, `versions` (`service`, `engine` = model@revision+rule, `tells`),
-`checked_at`, `seconds`, `device`, `complete`, `stored`, `from_store`.
+## Results so far
 
-The checks (also the map card's `steps`): **split** (sentences, abbreviations kept whole) → **model** (P(ai) as
-below) → **drivers** (which sentences make it read as AI) → **tells** (`detector/tells.py`, `TELLS_VERSION` 3):
-- *strong* = FAIL on its own: two or more different overused LLM words (delve, tapestry, pivotal, seamless…), leftover
-  placeholders (`[Hiring Manager Name]`, `{{first_name}}`), markdown in plain text.
-- *soft* = listed only: stock openers/closers ("I hope this email finds you well", "I look forward to hearing from
-  you": ordinary in human email — Sol round 1 caught them blocking 4 human texts, so `TELLS_VERSION` 3 made them soft),
-  one LLM word, em dashes (2+), "not just X, but Y", "the hardest part was not X", a rule-of-three habit,
-  "In conclusion," wrap-ups, eager-applicant boilerplate.
-- Measured: a strong tell in 13 of 74 AI texts and 2 of 554 human texts (plus 3 reddit posts with markdown).
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/bias_domain-dark.png">
+  <img alt="Bias check: human texts wrongly flagged as AI, by kind of writing" src="docs/img/bias_domain-light.png" width="100%">
+</picture>
 
-**Verdicts are keyed by SHA-256 of the text + `max_ai` + every version** (`SERVICE_VERSION` in `detector/verify.py`,
-the model and its revision + scoring rule, `TELLS_VERSION`). Changing any of them re-keys every verdict. Stored in
-`data/verdicts.sqlite` (dir 0700, git-ignored): verdict, scores and character offsets — never the text; quotes are
-added back from the text the caller sends. Tests: `python3 eval/verify_tests.py [--fresh]` (all pass 2026-11-11;
-two known model misses are reported, not failed).
+The first fine-tune (k3) learned a shortcut: *formal = AI*. It caught 97 % of humanized AI text — far above
+ZeroGPT's 77 % — but flagged half of real academic writing. The fix in progress is data in which **every domain has
+both human and AI text**, and choosing checkpoints by their **worst** domain, not their average.
 
-## How it works
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/ai_styles-dark.png">
+  <img alt="AI texts caught by how they were made" src="docs/img/ai_styles-light.png" width="100%">
+</picture>
 
-- **Engine:** [`wasitaigeneratedcom/tropa-mini-ai-text-detector`](https://huggingface.co/wasitaigeneratedcom/tropa-mini-ai-text-detector)
-  (DeBERTa-v3-large fine-tuned from desklib, Apache-2.0), 4 classes: human / ai / ai_edited / humanized.
-- **Score = P(ai)**, length-weighted over sentence-aligned 500-token chunks — except when the model is sure the text
-  is not human (P(human) < 1 %), then `1 − P(human)`. Plain `1 − P(human)` (the model card's score) flags polished
-  human writing (49 % of real college essays); plain P(ai) let half of LLM-"humanized" AI text through because the
-  model files it under `humanized`. The rule keeps native-English false positives at ~2 % and catches 72 % of it.
-  `humanized` / `ai_edited` are otherwise shown as hints only.
-- **Sentences, short texts (≤ 225 words: emails, form answers):** the text is re-scored once without each sentence;
-  a sentence is red when removing it drops the score by ≥ 1.0 log-odds (e.g. 61 % → 36 %), amber ≥ 0.5. The tooltip
-  shows the score without it — the sentences to rewrite first. (A window would be the whole text, so every sentence
-  would get the same score.)
-- **Sentences, longer texts:** each sentence is scored inside a ~150-word window of its neighbours (short windows are
-  unreliable: 45 words caught 36 % of AI text, 150 words 90 %); ≥ 0.70 = red, ≥ 0.40 = amber. "% of text that reads
-  as AI" = words in red sentences.
-- **GPU sharing:** the GPU belongs to the render workers (shorts-render, sim-engine), which run every job under
-  `flock ~/All code/shorts-studio/.gpu.lock`. The detector takes that same lock, non-blocking, for each check: free →
-  fp16 copy in VRAM (~1.1 GB), checks take ~3–5 s; held by a render → CPU (~7 s for 250 words). It keeps the GPU 60 s
-  after a check (`GPU_IDLE_S`) and gives it back within ~2 s as soon as anything waits on the lock (`/proc/locks`).
-  It never creates the lock file (the workers bind-mount its inode). RAM copy dropped after 30 min idle (`RAM_IDLE_S`).
-- **Limits:** English, 50+ words. 6000 words per check.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/speed-dark.png">
+  <img alt="Seconds per check on a GTX 1660 Ti and on CPU" src="docs/img/speed-light.png" width="80%">
+</picture>
 
-## How good is it (eval/, 2026-11-11)
+## How it's evaluated
 
-743 texts: 554 human (pre-2020 news, Enron email, reddit posts/stories, and Liang et al. 2023's essay sets), 66 fresh
-AI texts from 8 current models (Claude Opus/Sonnet/Haiku 5.5, Fable 5.2, Sonnet 4.5, GPT-6 Sol, GPT-5.6 Terra,
-Gemini 3 Flash; 12 genres incl. cover letters, LinkedIn, reddit, "casual"), 32 of those rewritten by an LLM "to sound
-human", 91 human essays polished by GPT-4. Full output: `eval/RESULTS.txt`.
+- **Never on training data.** Held-out splits plus whole datasets the model never saw (MAGE, HC3, ArguGPT,
+  COLING-2025, a 2026 benchmark, learner essays), deduplicated against training by hash.
+- **Bias report** for every version: false-positive rate by writer (native / non-native), domain, register and
+  length; catch rate by model family, style and length; the headline is the *worst* group. → `eval/bias.py`
+- **Head-to-head with ZeroGPT** on the same texts.
+- **Independent review**: GPT-6.1 Sol builds a fresh, deliberately hard set each round, runs both detectors and
+  scores ours (round 1: [REPORT.md](eval/sol/round-1/REPORT.md)). The builder never trains on its texts.
 
-| flagged as AI at the 50 % line | this detector |
-|---|---|
-| human: CS224N papers / US college essays / US student essays | 1 / 4 / 0 % |
-| human: news / Enron email / reddit posts / reddit stories | 2 / 2 / 0 / 8 % |
-| human: TOEFL essays, non-native | **33 %** |
-| fresh AI text, 8 models | **98.5 %** (100 % for 7 of 8; Opus 5.5 92 %) · AUROC 0.994 |
-| AI text rewritten by an LLM "to sound human" | 72 % |
-| human essays polished by GPT-4 | 90 % |
+## Training
 
-Other engines tried (AUROC, human vs raw AI): desklib 0.890 · fakespot 0.764 · TMR 0.479 · Binoculars (Qwen2.5-1.5B
-pair) 0.597 · Fast-DetectGPT 0.557; a learned combination of them all did worse than tropa-mini alone.
+Full fine-tunes on **Kaggle** (free T4) and **Runpod** (pay-per-minute, with a hard price cap, a watchdog that
+deletes the pod, and a cost ledger) — [training](docs/training.md). The served model stays small enough for the
+6 GB card; better data does the heavy lifting.
 
-### Against ZeroGPT (zerogpt.com today, through its web API; `eval/sites/`)
+## Limits and responsible use
 
-Stratified sample of 117 of the texts above (`eval/zerogpt_compare.py` → `sites/zerogpt_sample.json`):
+A detector score is **evidence, not proof**. Every detector, this one included, makes mistakes — most often on short
+texts, formal writing and writers whose first language isn't English. Don't use it as the only basis for a decision
+about a person. This project measures those failure modes in public precisely because they matter.
 
-| flagged as AI (≥ 50 %) | n | ZeroGPT | this detector |
-|---|---|---|---|
-| human, native English (essays, email, news, reddit) | 45 | 0 % | 0 % |
-| human, non-native (TOEFL) | 12 | 0 % | 33 % |
-| raw AI, 8 current models | 36 | 100 % | 100 % |
-| AI rewritten by an LLM to sound human | 16 | **100 %** | 75 % |
-| human essays polished by GPT-4 | 8 | 100 % | 100 % |
+## Credits
 
-And 12 texts shaped like the real use (`sites/results.json`): 8 written by Claude Haiku 5.5 (3 emails, 3 application
-text-box answers, 2 "typed casually"), 4 human (2 Enron emails, 2 pre-2023 college essays): **ZeroGPT 12/12, this
-detector 10/12** — it missed an all-lowercase "ok so…" answer (2 %) and scored one real college essay 100 %.
-
-So ZeroGPT (2026) is the stronger detector on humanized and non-native text; this one matches it on plain human and
-plain AI text, runs offline, and says which sentences drive the score. Caveat: the human corpora are public, so
-ZeroGPT may have trained on them. Only ZeroGPT could be tested automatically: GPTZero and Sapling need an account/API
-key, QuillBot and Undetectable sit behind a "verify you are human" check.
-
-## Speed (eval/bench.py → eval/BENCH.txt, 2026-11-11)
-
-| words | GPU | CPU (a render holds the GPU) |
-|---|---|---|
-| 100 | 0.6 s | 0.9 s |
-| 250 | 2.4 s | 4.0 s |
-| 500 | 8.4 s | 14.7 s |
-| 1000 | 20 s | 38 s |
-| 2000 | 44 s | 87 s |
-
-Short texts (≤ 225 words) take one extra pass per sentence for the highlights: ~1–4 s on the GPU (measured before this
-mode existed: the table above). Cold start 4.1 s. RAM 3.1 GiB while loaded, VRAM 1.5 GiB while it holds the GPU.
-Checks are served one at a time (4 × 250 words at once: 9.7 s). A render that asks for the GPU gets it after
-0.1–1.4 s when the detector is idle, or when the check in flight finishes (≤ 44 s for 2000 words).
-
-## Files
-
-```
-detector/engines.py   classifiers (+ the zero-shot engines used only in eval)
-detector/score.py     thresholds, sentence windows, verdict text, hints
-detector/server.py    FastAPI app, GPU-lock handling
-detector/gpu.py       the shared GPU lock (non-blocking take, waiters from /proc/locks)
-detector/static/index.html   the page
-eval/                 gen_ai.py, gen_humanized.py (via CLIProxyAPI), run_eval.py, analyze.py, tune_windows.py,
-                      bench.py, zerogpt_compare.py; sites/ = the cross-site test (Haiku texts + results)
-```
-
-Re-run the evaluation: `.venv/bin/python eval/gen_ai.py` (needs CLIProxyAPI), then `.venv/bin/python -m eval.run_eval`
-(waits for the GPU lock) and `.venv/bin/python -m eval.analyze`. `eval/data/` is git-ignored (third-party texts),
-but it is in the nightly backup.
-
-Setup from scratch (versions pinned in `requirements.txt`; torch from the cu126 index — the 1660 Ti is sm_75):
-`uv venv --python 3.13 .venv && uv pip install --python .venv/bin/python --index-url https://download.pytorch.org/whl/cu126 torch==2.14.1`,
-`uv pip install --python .venv/bin/python -r requirements.txt`, then
-`.venv/bin/hf download wasitaigeneratedcom/tropa-mini-ai-text-detector --revision 10fecd0856ed65ddfe92b88416b0a1e1350d8fb8`
-(the revision evaluated above). The eval's other models: desklib/ai-text-detector-v1.01, Oxidane/tmr-ai-text-detector,
-fakespot-ai/roberta-base-ai-text-detection-v1, Qwen/Qwen2.5-1.5B(-Instruct) — ~8 GB, only needed to re-run eval.
+Starts from [tropa-mini](https://huggingface.co/wasitaigeneratedcom/tropa-mini-ai-text-detector) (Apache-2.0), itself
+fine-tuned from [desklib/ai-text-detector-v1.01](https://huggingface.co/desklib/ai-text-detector-v1.01) on
+[DeBERTa-v3-large](https://huggingface.co/microsoft/deberta-v3-large). Data: Jabarian & Imas 2025 (DetectionAI),
+ELLIPSE, ICNALE, DAIGT, RAID, MAGE, COLING-2025 MGT, HC3, AESLC, webis/tldr-17, WritingPrompts — see
+[NOTICE](NOTICE). Code: MIT.

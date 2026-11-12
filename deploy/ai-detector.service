@@ -1,16 +1,17 @@
 [Unit]
 Description=AI Detector (local AI-text detector web UI + API on 127.0.0.1:8323)
-Documentation=file:///home/you/All%%20code/ai-detector/README.md
+Documentation=https://github.com/AdityaBaranwal1/local-ai-detector
 After=network-online.target
 StartLimitIntervalSec=300
 StartLimitBurst=5
 
 [Service]
 Type=simple
-WorkingDirectory=/home/you/All code/ai-detector
+# repo checked out at ~/All code/ai-detector (edit both paths if yours differs)
+WorkingDirectory=%h/All code/ai-detector
 # Models come from the local Hugging Face cache only: nothing is fetched (or sent) at run time.
 Environment=HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
-ExecStart="/home/you/All code/ai-detector/.venv/bin/python" -m uvicorn detector.server:app --host 127.0.0.1 --port 8323 --no-access-log
+ExecStart="%h/All code/ai-detector/.venv/bin/python" -m uvicorn detector.server:app --host 127.0.0.1 --port 8323 --no-access-log
 Restart=always
 RestartSec=5
 # The model is 1.7 GB in RAM while used (dropped after 30 min idle); cap it well above that.
