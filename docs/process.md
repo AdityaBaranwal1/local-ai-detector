@@ -254,12 +254,32 @@ Likely causes, most suspected first:
 4. **Checkpoint selection** ran on a dev set now dominated by benchmark text.
 5. Run-to-run noise (a point or two, not ten).
 
-The full scoring of v9 (held-back casual messages, the 400 review texts, the public benchmarks) and the combiners
-with it were stopped part-way by the owner's call to pause, so whether v9 helps *inside* a combiner is untested.
-**The live engine stays v0 + v8.**
+**Inside a combiner (finished 2026-11-12 evening).** The same length-aware, casual-aware fit as the live engine
+(`eval/stack_casual.py fit --length`, out-of-fold), scored on all four yardsticks:
+
+| | our test sets (vs ZeroGPT 280/291) | humanized AI | 400 review texts (ZeroGPT 9.9) | owner's genres / short AI (review round 3) | public, 510 texts ZeroGPT judged (ZeroGPT 96.9 %) | back-translated *modern* AI, held out (142) | short human messages flagged (426) |
+|---|---|---|---|---|---|---|---|
+| **v0 + v8 (live)** | **285** | **91 %** | **9.8** | **56/57 · 20/21** | 84.3 % | 107 | 4 |
+| v0 + v9 | 276 | 83 % | 9.7 | 54/57 · 18/21 | **95.9 %** | **110** | **1** |
+| v0 + v8 + v9 | 284 | 90 % | 9.8 | 55/57 · 19/21 | 88.0 % | 107 | 2 |
+
+- **v9 closed the public-benchmark gap**, but that data is in-distribution for it: v9 trained on the same
+  benchmarks' training splits (same generators, domains and attacks; the test texts themselves held out by hash).
+  DetectRL back-translation on the texts ZeroGPT judged: live 11/48, v0 + v9 41/48, ZeroGPT 41/48; Claude-instant
+  4/12 → 11/12 (ZeroGPT 12/12).
+- **On modern back-translated messages the gap was never large.** On v9's held-out split (German / French round
+  trips of 2025–26 AI messages, which no model trained on) the live engine already catches 107/142 (75 %), v9 110.
+  The 13–33 % weakness was mostly about *2023* models' text, not the trick itself.
+- **Where it matters for the owner, v9 is a little worse:** fewer AI messages caught in the owner's genres and on
+  short texts, humanized AI down 8 points, 9 fewer right on our test sets. Its one real gain there is fewer short
+  human messages flagged (1 vs 4 of 426).
+
+**Decision: the live engine stays v0 + v8.** The v9 combiners are saved locally (`models/stacker-v0-mb9-len.json`,
+`models/stacker-v0-mb8-mb9-len.json`, not deployed).
 
 Next, if resumed — v10: the benchmark data cut to ~8k texts so it can't swamp the modern data, no
 "polished human = AI-edited" label, back-translation kept in both labels, one pass over the data instead of two
-(half the time and cost), and a faster GPU when one is available; then the same three yardsticks.
+(half the time and cost), and a faster GPU when one is available; then the same yardsticks — and judge the public benchmarks with the benchmark-trained
+models' in-distribution advantage in mind.
 
 _Paused 2026-11-12 15:30. Runpod spend so far: $4.46 of $10._

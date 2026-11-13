@@ -65,4 +65,8 @@ ZeroGPT was run on a stratified sample of 510 of the same texts (one request per
 Follow-up (v9, 2026-11-12): trained on those families (the benchmarks' *training* splits — test splits untouched)
 plus locally back-translated text, human texts too. On its own v9 came out worse on our held-out sets (see
 [process § Round 10](process.md#round-10--v9-closing-the-public-benchmark-gaps-trained-not-deployed)); the
-benchmark re-run with v9 was stopped when the project paused. The live engine is still v0 + v8 — the numbers above.
+re-run (finished the same evening): a v0 + v9 combiner reaches **95.9 %** on the 510 texts ZeroGPT judged (ZeroGPT
+96.9 %, live 84.3 %) and catches DetectRL back-translation as often as ZeroGPT (41/48 each, live 11/48). That is
+in-distribution for v9, though: it trained on these benchmarks' training splits. On held-out back-translated
+*modern* messages the live engine already catches 75 % (v9: 77 %), and on our own yardsticks v9 is slightly worse, so
+the live engine is still v0 + v8 — the numbers above. Full table in process § Round 10.
